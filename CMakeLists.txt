@@ -9,8 +9,9 @@ find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 # Add libraries
-add_library(utility utility.h utility.cpp))
+add_library(utility headers/utility.h implementations/utility.cpp))
 #add_library(recognition recognition.h recognition.cpp))
+add_library(evaluation headers/Eval.h implementations/Eval.cpp)
 
 # Add the executable
 add_executable(${PROJECT_NAME} Project_CV.cpp)
@@ -21,3 +22,4 @@ target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
 # Link other libraries
 target_link_libraries(${PROJECT_NAME} utility)
 #target_link_libraries(${PROJECT_NAME} recognition)
+target_link_libraries(${PROJECT_NAME} evaluation)

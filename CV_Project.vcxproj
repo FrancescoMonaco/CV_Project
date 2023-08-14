@@ -134,13 +134,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CV_Project.cpp" />
-    <ClCompile Include="Utility.cpp" />
+    <ClCompile Include="implementations\Eval.cpp" />
+    <ClCompile Include="implementations\Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Utility.h" />
+    <ClInclude Include="headers\Eval.h" />
+    <ClInclude Include="headers\Utility.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -10,22 +10,40 @@
 #include <vector>
 
 
-#include "Utility.h"
+#include "../CV_Project/headers/Utility.h"
+#include "../CV_Project/headers/Eval.h" 
 
 //Constants, later to be moved to a config file
 const std::string num_path = "D:/Download/process_data/Rec_templates";
 const std::string part_path = "D:/Download/process_data/Body_templates";
 
 const double color_variation_threshold = 10.0;
+const double hu_moments_threshold = 0.46;
 int orange_lower_bound = 120;
 int orange_upper_bound = 255;
 
 int main()
 {
+
+    //Evaluation Part
+    std::vector<BoundingBox> resultData = loadBoundingBoxData("D:/Download/Sport_scene_dataset/Masks");
+    //std::vector<BoundingBox> predData = loadBoundingBoxData("D:/Download/Sport_scene_dataset/Masks");
+    float result = processBoxPreds(resultData, resultData);
+    std::cout << "mAP: " << result << std::endl;
+
+    std::vector<cv::Mat> resultData2 = loadSemanticSegmentationData("D:/Download/Sport_scene_dataset/Masks");
+    float result2 = processSemanticSegmentation(resultData2, resultData2);
+    std::cout << "IoU: " << result2 << std::endl;
+
+    //Show results, uncomment to show
+    showResults("D:/Download/Sport_scene_dataset/Images", "D:/Download/Sport_scene_dataset/Masks");
+}
+/*
+{
     //Put all images in a vector using glob
     std::vector<cv::Mat> images;
     std::vector<cv::Mat> numbers;
-   // std::vector<cv::Mat> parts;
+    std::vector<cv::Mat> parts;
 
     std::string path = "D:/Download/Sport_scene_dataset/Images/*.jpg"; //select only jpg
     std::vector<cv::String> fn;
@@ -33,7 +51,7 @@ int main()
     std::vector<cv::String> fn3;
     cv::glob(path, fn, true); // recurse
     cv::glob(num_path, fn2, true); // recurse
-    //cv::glob(part_path, fn3, true); // recurse
+    cv::glob(part_path, fn3, true); // recurse
 
     for (size_t k = 0; k < fn.size(); ++k)
     {
@@ -50,11 +68,11 @@ int main()
 
     }
 
-    //for (size_t k = 0; k < fn3.size(); ++k) {
-    //    cv::Mat im = cv::imread(fn3[k], cv::IMREAD_GRAYSCALE);
-    //    if (im.empty()) continue;
-    //    parts.push_back(im);
-    //}
+    for (size_t k = 0; k < fn3.size(); ++k) {
+        cv::Mat im = cv::imread(fn3[k], cv::IMREAD_GRAYSCALE);
+        if (im.empty()) continue;
+        parts.push_back(im);
+    }
 
     for (auto& test : images)
     {
@@ -66,6 +84,8 @@ int main()
         cv::GaussianBlur(test, test, cv::Size(5, 5), 0);
         cv::Canny(test, edges, 100, 200);
         cv::imshow("edges", edges);
+        std::vector<cv::Rect> template_rects;
+
            //Detect contours
            std::vector<std::vector<cv::Point>> contours;
            cv::findContours(edges, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
@@ -88,7 +108,7 @@ int main()
 				   continue;
 			   }
 			   cv::matchTemplate(test_gray, number, result, cv::TM_CCORR_NORMED);
-			   cv::threshold(result, result, 0.50, 1.0, cv::THRESH_TOZERO);
+			   cv::threshold(result, result, 0.75, 1.0, cv::THRESH_TOZERO);
                 //Put rectangles around the found numbers
                while (true)
                {
@@ -102,12 +122,16 @@ int main()
                    cv::meanStdDev(detected_region, mean_color, stddev_color);
                    double color_variation = stddev_color[0]; // Assuming grayscale image
 
-                   if (maxVal >= 0.85 && color_variation > color_variation_threshold)
+                   if (maxVal >= 0.85)
                    {
-                       //Put the rectangle on the image only if it doesn't contain a semi uniform color
-
-					   cv::rectangle(test, maxLoc, cv::Point(maxLoc.x + number.cols, maxLoc.y + number.rows), cv::Scalar(0, 0, 255), 2);
-					   cv::floodFill(result, maxLoc, cv::Scalar(0), 0, cv::Scalar(0.1), cv::Scalar(1.0));
+                       if (color_variation > color_variation_threshold) {
+                           //Put the rectangle on the image only if it doesn't contain a semi uniform color
+                           template_rects.push_back(cv::Rect(maxLoc.x, maxLoc.y, number.cols, number.rows));
+                           cv::floodFill(result, maxLoc, cv::Scalar(0), 0, cv::Scalar(0.1), cv::Scalar(1.0));
+                       }
+                       else {
+                           cv::floodFill(result, maxLoc, cv::Scalar(0), 0, cv::Scalar(0.1), cv::Scalar(1.0));
+                       }
 				   }
                    else
                    {
@@ -115,6 +139,36 @@ int main()
 				   }
 			   }
            }
+
+           //For each rectangle found, check if it contains a body part, using Hu moments and the parts vector
+              for (auto& rect : template_rects)
+              {
+                ////extract the rectangle and create the canny version
+                //    cv::Mat detected_region = edges(rect);
+                //    //Compute the Hu moments of the detected region
+                //    cv::Moments moments = cv::moments(detected_region);
+                //    cv::Mat hu_moments;
+                //    cv::HuMoments(moments, hu_moments);
+                //    //Vector for the distances
+                //    std::vector<double> distances;
+                //    //Compare the Hu moments with the ones of the parts
+                //    for (auto& part : parts)
+                //    {
+                //        cv::Moments part_moments = cv::moments(part);
+                //        cv::Mat part_hu_moments;
+                //        cv::HuMoments(part_moments, part_hu_moments);
+                //        double distance = cv::norm(hu_moments, part_hu_moments);
+                //        //Save the distances in a vector
+                //        distances.push_back(distance);
+                //    }
+                //    //If one of the distances is smaller than the threshold, the rectangle contains a body part
+                //    // and we can draw it on the image
+                //    if (*std::min_element(distances.begin(), distances.end()) < hu_moments_threshold)
+                //    {
+                //        cv::rectangle(test, rect, cv::Scalar(0, 255, 0), 2);
+                //    }
+                  cv::rectangle(test, rect, cv::Scalar(0, 255, 0), 2);
+                }
        //    cv::imshow("test", test);
 
 
@@ -161,70 +215,41 @@ int main()
   //      cv::Mat result_keypoints;
   //      cv::drawKeypoints(test, keypoints, result_keypoints, cv::Scalar(0, 0, 255), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
   //      cv::imshow("result_keypoints", result_keypoints);
+ 
         //Use HOGDescriptor to detect people
-        cv::HOGDescriptor hog;
-        hog.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
-        std::vector<cv::Rect> found, found_filtered;
-        hog.detectMultiScale(test_copy, found, 0, cv::Size(8, 8), cv::Size(32, 32), 1.05, 2);
-        size_t i, j;
-        for (i = 0; i < found.size(); i++)
-        {
-			cv::Rect r = found[i];
-			for (j = 0; j < found.size(); j++)
-				if (j != i && (r & found[j]) == r)
-					break;
-			if (j == found.size())
-				found_filtered.push_back(r);
-		}
-        //Filter the rectangles based on std deviation of color and mean color
-        //for (i = 0; i < found_filtered.size(); i++)
-        //{
-        //    cv::Rect r = found_filtered[i];
-        //    //Calculate color variation within the detected rectangle
-        //    cv::Mat detected_region = test(cv::Rect(r.x, r.y, r.width, r.height));
-        //    cv::Scalar mean_color, stddev_color;
-        //    cv::meanStdDev(detected_region, mean_color, stddev_color);
-        //    double color_variation = stddev_color[0]; // Assuming grayscale image
-        //    if (color_variation > color_variation_threshold)
-        //    {
-        //        //Put the rectangle in the vector only if it doesn't contain a semi uniform color
-        //        found_filtered[i] = r;
-        //    }
-        //    else
-        //    {
-        //        found_filtered.erase(found_filtered.begin() + i);
-        //        i--;
-        //    }
-        //}
-        ////If the rectangles are overlapping, merge them
-        //for (i = 0; i < found_filtered.size(); i++)
-        //{
-        //    cv::Rect r = found_filtered[i];
-        //    for (j = 0; j < found_filtered.size(); j++)
-        //        if (j != i && (r & found_filtered[j]) == r)
-        //            break;
-        //    if (j != found_filtered.size())
-        //    {
-        //        found_filtered.erase(found_filtered.begin() + i);
-        //        i--;
-        //    }
-        //}
+  //      cv::HOGDescriptor hog;
+  //      hog.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
+  //      std::vector<cv::Rect> found, found_filtered;
+  //      hog.detectMultiScale(test_copy, found, 0, cv::Size(8, 8), cv::Size(32, 32), 1.05, 2);
+  //      size_t i, j;
+  //      for (i = 0; i < found.size(); i++)
+  //      {
+		//	cv::Rect r = found[i];
+		//	for (j = 0; j < found.size(); j++)
+		//		if (j != i && (r & found[j]) == r)
+		//			break;
+		//	if (j == found.size())
+		//		found_filtered.push_back(r);
+		//}
+  //      //Filter the rectangles based on std deviation of color and mean color
+  //        removeUniformRect(found_filtered, test_copy, color_variation_threshold);
+  //      //If the rectangles share 15% of their area, merge them into a new rectangle that contains both
+  //        mergeOverlapRect(found_filtered, 0.22);
 
 
+  //      for (i = 0; i < found_filtered.size(); i++)
+  //      {
 
-        for (i = 0; i < found_filtered.size(); i++)
-        {
+  //          cv::Rect r = found_filtered[i];
+  //          //The HOG detector returns slightly larger rectangles than the real objects.
+  //          //So we slightly shrink the rectangles to get a nicer output.
+  //          r.x += cvRound(r.width * 0.1);
+  //          r.width = cvRound(r.width * 0.8);
+  //          r.y += cvRound(r.height * 0.07);
+  //          r.height = cvRound(r.height * 0.8);
 
-            cv::Rect r = found_filtered[i];
-            //The HOG detector returns slightly larger rectangles than the real objects.
-            //So we slightly shrink the rectangles to get a nicer output.
-            r.x += cvRound(r.width * 0.1);
-            r.width = cvRound(r.width * 0.8);
-            r.y += cvRound(r.height * 0.07);
-            r.height = cvRound(r.height * 0.8);
-
-            cv::rectangle(test, r.tl(), r.br(), cv::Scalar(0, 255, 0), 3);
-        }
+  //          cv::rectangle(test, r.tl(), r.br(), cv::Scalar(0, 255, 0), 3);
+  //      }
 
 
         cv::imshow("test", test);
@@ -233,3 +258,4 @@ int main()
         cv::waitKey(0);
     }
 }
+*/
