@@ -1,7 +1,8 @@
 #ifndef UTILITY_H
 #define UTILITY_H
+// Utility.h : Francesco Pio Monaco
 #include <opencv2/opencv.hpp>
-//Francesco Pio Monaco
+
 
 /// @brief Checks if the image has a considerable amount of orange color
 /// @param image , the image to be checked

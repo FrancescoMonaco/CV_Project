@@ -1,5 +1,5 @@
 #include "../headers/Utility.h"
-//Francesco Pio Monaco
+// Utility.cpp : Francesco Pio Monaco
 
 //Constants for the utility functions
     //Thresholds for the orange color

@@ -1,6 +1,6 @@
 #ifndef EVAL_H
 #define EVAL_H
-
+// Eval.h : Francesco Pio Monaco
 #include <string>
 #include <vector>
 #include <opencv2/core.hpp>
