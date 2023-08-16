@@ -110,11 +110,15 @@ int main()
             diffusedImage = newDiffusedImage;
         }
 
-
+        //Apply a max kernel on diffusedImage
+        cv::Mat maxKernel = cv::Mat::ones(3, 3, CV_8U);
+        cv::Mat maxImage;
+        cv::dilate(diffusedImage, maxImage, maxKernel);
+        cv::imshow("max", maxImage);
         // Display the original Canny image and the diffused image
-        cv::imshow("Diffused Image", diffusedImage);
+       
         cv::Mat mask;
-        cv::threshold(diffusedImage, mask, 1, 255, cv::THRESH_BINARY);
+        cv::threshold(maxImage, mask, 1, 255, cv::THRESH_BINARY);
 
         // Apply the mask to the original image
         cv::Mat maskedImage;
