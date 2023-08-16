@@ -9,7 +9,6 @@
 #include <iostream>
 #include <vector>
 
-
 #include "../CV_Project/headers/Utility.h"
 #include "../CV_Project/headers/Eval.h" 
 
@@ -65,11 +64,66 @@ int main()
         //Detect edges
         cv::Mat edges;
         //Do a strong blur before canny
-        cv::GaussianBlur(test, test, cv::Size(5, 5), 0);
-        cv::Canny(test, edges, 100, 200);
-        cv::imshow("edges", edges);
+        cv::GaussianBlur(test, test, cv::Size(7, 7), 0.4, 0.4);
+        //Compute the gradient magnitude of the image
+        cv::Mat grad_x, grad_y;
+        cv::Mat abs_grad_x, abs_grad_y, test_grad;
+        cv::Sobel(test, grad_x, CV_16S, 1, 0, 3, 1, 0, cv::BORDER_DEFAULT);
+        cv::Sobel(test, grad_y, CV_16S, 0, 1, 3, 1, 0, cv::BORDER_DEFAULT);
+        cv::convertScaleAbs(grad_x, abs_grad_x);
+        cv::convertScaleAbs(grad_y, abs_grad_y);
+        cv::addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, test_grad);
+        //Compute the median of the gradient magnitude
+        cv::Scalar mean, stddev;
+        cv::meanStdDev(test_grad, mean, stddev);
+        double median = mean[0];
+        int canny_c = 9;
+        std::cout << "Median: " << median << std::endl;
+
+
+
+        cv::Canny(test, edges, canny_c*median/2, canny_c*median);
+       // cv::imshow("edges", edges);
         std::vector<cv::Rect> template_rects;
 
+        int iterations = 40;
+        cv::Mat diffusedImage = edges.clone();
+        double lambda = 1;  // Diffusion rate
+        int alpha = 1;
+         //Apply heat diffusion iteratively
+        for (int iter = 0; iter < iterations; ++iter) {
+            cv::Mat newDiffusedImage = diffusedImage.clone();
+
+            for (int y = 1; y < diffusedImage.rows - 1; ++y) {
+                for (int x = 1; x < diffusedImage.cols - 1; ++x) {
+                    // Apply heat diffusion equation
+                    double newValue = diffusedImage.at<uchar>(y, x) + alpha * (
+                        diffusedImage.at<uchar>(y - 1, x) + diffusedImage.at<uchar>(y + 1, x) +
+                        diffusedImage.at<uchar>(y, x - 1) + diffusedImage.at<uchar>(y, x + 1) -
+                        4 * diffusedImage.at<uchar>(y, x)
+                        );
+
+                    newDiffusedImage.at<uchar>(y, x) = cv::saturate_cast<uchar>(newValue);
+                }
+            }
+
+            diffusedImage = newDiffusedImage;
+        }
+
+
+        // Display the original Canny image and the diffused image
+        cv::imshow("Diffused Image", diffusedImage);
+        cv::Mat mask;
+        cv::threshold(diffusedImage, mask, 1, 255, cv::THRESH_BINARY);
+
+        // Apply the mask to the original image
+        cv::Mat maskedImage;
+        test.copyTo(maskedImage, mask);
+        cv::imshow("masked", maskedImage);
+
+        
+
+        /*
         //Detect contours
         std::vector<std::vector<cv::Point>> contours;
         cv::findContours(edges, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
@@ -155,8 +209,8 @@ int main()
         }
         //    cv::imshow("test", test);
 
-
-
+        
+        */
 
 
          // Blur the image to reduce noise using a bilateral filter
