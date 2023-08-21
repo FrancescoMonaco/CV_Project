@@ -21,4 +21,15 @@ void removeUniformRect(std::vector<cv::Rect>& rects, cv::Mat image, int threshol
 /// @param rects vector of rectangles
 /// @param threshold value of the percentage of overlap
 void mergeOverlapRect(std::vector<cv::Rect>& rects, int threshold = 10);
+
+/// @brief Takes the raw rectangles and cleans them by removing the uniform ones and merging the overlapping ones
+/// @param rects vector of rectangles
+/// @param image where the rectangles are detected
+void cleanRectangles(std::vector<cv::Rect>& rects, cv::Mat image);
+
+/// @brief Computes the heat diffusion of the image using a heat equation
+/// @param image 
+/// @return the original image masked with the heat diffusion
+cv::Mat computeDiffusion(cv::Mat image);
+
 #endif // !UTILITY_H

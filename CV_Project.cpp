@@ -57,76 +57,52 @@ int main()
         parts.push_back(im);
     }
 
+    //cv::Mat an = cv::imread("D:/Download/Sport_scene_dataset/Images/im10.jpg");
+    //cv::Mat edges, test;
+    ////Do a strong blur before canny
+    //cv::GaussianBlur(an, test, cv::Size(7, 7), 0.4, 0.4);
+    ////Compute the gradient magnitude of the image
+    //cv::Mat grad_x, grad_y;
+    //cv::Mat abs_grad_x, abs_grad_y, test_grad;
+    //cv::Sobel(test, grad_x, CV_16S, 1, 0, 3, 1, 0, cv::BORDER_DEFAULT);
+    //cv::Sobel(test, grad_y, CV_16S, 0, 1, 3, 1, 0, cv::BORDER_DEFAULT);
+    //cv::convertScaleAbs(grad_x, abs_grad_x);
+    //cv::convertScaleAbs(grad_y, abs_grad_y);
+    //cv::addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, test_grad);
+    ////Compute the median of the gradient magnitude
+    //cv::Scalar mean, stddev;
+    //cv::meanStdDev(test_grad, mean, stddev);
+    //double median = mean[0];
+    //int canny_c = 9;
+    //std::cout << "Median: " << median << std::endl;
+
+
+
+    ////cv::Canny(test, edges, canny_c * median / 2, canny_c * median);
+    //cv::Rect rectangle = cv::Rect(900, 0, 1056, 512);
+    ////Check if the rectangle is inside the image
+    //if (rectangle.x < 0) rectangle.x = 0;
+    //if (rectangle.y < 0) rectangle.y = 0;
+    //if (rectangle.x + rectangle.width > an.cols) rectangle.width = an.cols - rectangle.x;
+    //if (rectangle.y + rectangle.height > an.rows) rectangle.height = an.rows - rectangle.y;
+
+    //cv::Mat box = an(rectangle);
+    //cv::Mat box2;
+    //cv::Canny(box, box2, 300, 500);
+    //cv::imshow("box", box2);
+    //cv::waitKey(0);
+
+    int savenum= 0;
     for (auto& test : images)
     {
         //Create a copy of the image to work on
         cv::Mat test_copy = test.clone();
         //Detect edges
         cv::Mat edges;
-        //Do a strong blur before canny
-        cv::GaussianBlur(test, test, cv::Size(7, 7), 0.4, 0.4);
-        //Compute the gradient magnitude of the image
-        cv::Mat grad_x, grad_y;
-        cv::Mat abs_grad_x, abs_grad_y, test_grad;
-        cv::Sobel(test, grad_x, CV_16S, 1, 0, 3, 1, 0, cv::BORDER_DEFAULT);
-        cv::Sobel(test, grad_y, CV_16S, 0, 1, 3, 1, 0, cv::BORDER_DEFAULT);
-        cv::convertScaleAbs(grad_x, abs_grad_x);
-        cv::convertScaleAbs(grad_y, abs_grad_y);
-        cv::addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, test_grad);
-        //Compute the median of the gradient magnitude
-        cv::Scalar mean, stddev;
-        cv::meanStdDev(test_grad, mean, stddev);
-        double median = mean[0];
-        int canny_c = 9;
-        std::cout << "Median: " << median << std::endl;
-
-
-
-        cv::Canny(test, edges, canny_c*median/2, canny_c*median);
-       // cv::imshow("edges", edges);
-        std::vector<cv::Rect> template_rects;
-
-        int iterations = 40;
-        cv::Mat diffusedImage = edges.clone();
-        double lambda = 1;  // Diffusion rate
-        int alpha = 1;
-         //Apply heat diffusion iteratively
-        for (int iter = 0; iter < iterations; ++iter) {
-            cv::Mat newDiffusedImage = diffusedImage.clone();
-
-            for (int y = 1; y < diffusedImage.rows - 1; ++y) {
-                for (int x = 1; x < diffusedImage.cols - 1; ++x) {
-                    // Apply heat diffusion equation
-                    double newValue = diffusedImage.at<uchar>(y, x) + alpha * (
-                        diffusedImage.at<uchar>(y - 1, x) + diffusedImage.at<uchar>(y + 1, x) +
-                        diffusedImage.at<uchar>(y, x - 1) + diffusedImage.at<uchar>(y, x + 1) -
-                        4 * diffusedImage.at<uchar>(y, x)
-                        );
-
-                    newDiffusedImage.at<uchar>(y, x) = cv::saturate_cast<uchar>(newValue);
-                }
-            }
-
-            diffusedImage = newDiffusedImage;
-        }
-
-        //Apply a max kernel on diffusedImage
-        cv::Mat maxKernel = cv::Mat::ones(3, 3, CV_8U);
-        cv::Mat maxImage;
-        cv::dilate(diffusedImage, maxImage, maxKernel);
-        cv::imshow("max", maxImage);
-        // Display the original Canny image and the diffused image
-       
-        cv::Mat mask;
-        cv::threshold(maxImage, mask, 1, 255, cv::THRESH_BINARY);
-
-        // Apply the mask to the original image
-        cv::Mat maskedImage;
-        test.copyTo(maskedImage, mask);
-        cv::imshow("masked", maskedImage);
-
-        
-
+        //save the masked image using a different name using savenum
+        //std::string savepath = "D:/Download/process" + std::to_string(savenum) + ".jpg";
+        //savenum++;
+        //cv::imwrite(savepath, maskedImage);
         /*
         //Detect contours
         std::vector<std::vector<cv::Point>> contours;
@@ -259,13 +235,13 @@ int main()
    //      cv::imshow("result_keypoints", result_keypoints);
 
          //Use HOGDescriptor to detect people
-   //      cv::HOGDescriptor hog;
-   //      hog.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
-   //      std::vector<cv::Rect> found, found_filtered;
-   //      hog.detectMultiScale(test_copy, found, 0, cv::Size(8, 8), cv::Size(32, 32), 1.05, 2);
-   //      size_t i, j;
-   //      for (i = 0; i < found.size(); i++)
-   //      {
+         //cv::HOGDescriptor hog;
+         //hog.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
+         //std::vector<cv::Rect> found, found_filtered;
+         //hog.detectMultiScale(test_copy, found, 0, cv::Size(8, 8), cv::Size(32, 32), 1.05, 2);
+         //size_t i, j;
+         //for (i = 0; i < found.size(); i++)
+         //{
          //	cv::Rect r = found[i];
          //	for (j = 0; j < found.size(); j++)
          //		if (j != i && (r & found[j]) == r)
@@ -273,31 +249,31 @@ int main()
          //	if (j == found.size())
          //		found_filtered.push_back(r);
          //}
-   //      //Filter the rectangles based on std deviation of color and mean color
-   //        removeUniformRect(found_filtered, test_copy, color_variation_threshold);
-   //      //If the rectangles share 15% of their area, merge them into a new rectangle that contains both
-   //        mergeOverlapRect(found_filtered, 0.22);
+         ////Filter the rectangles based on std deviation of color and mean color
+         //  removeUniformRect(found_filtered, test_copy, color_variation_threshold);
+         ////If the rectangles share 15% of their area, merge them into a new rectangle that contains both
+         //  mergeOverlapRect(found_filtered, 0.22);
 
 
-   //      for (i = 0; i < found_filtered.size(); i++)
-   //      {
+         //for (i = 0; i < found_filtered.size(); i++)
+         //{
 
-   //          cv::Rect r = found_filtered[i];
-   //          //The HOG detector returns slightly larger rectangles than the real objects.
-   //          //So we slightly shrink the rectangles to get a nicer output.
-   //          r.x += cvRound(r.width * 0.1);
-   //          r.width = cvRound(r.width * 0.8);
-   //          r.y += cvRound(r.height * 0.07);
-   //          r.height = cvRound(r.height * 0.8);
+         //    cv::Rect r = found_filtered[i];
+         //    //The HOG detector returns slightly larger rectangles than the real objects.
+         //    //So we slightly shrink the rectangles to get a nicer output.
+         //    r.x += cvRound(r.width * 0.1);
+         //    r.width = cvRound(r.width * 0.8);
+         //    r.y += cvRound(r.height * 0.07);
+         //    r.height = cvRound(r.height * 0.8);
 
-   //          cv::rectangle(test, r.tl(), r.br(), cv::Scalar(0, 255, 0), 3);
-   //      }
-
-
-        cv::imshow("test", test);
+         //    cv::rectangle(test, r.tl(), r.br(), cv::Scalar(0, 255, 0), 3);
+         //}
 
 
-        cv::waitKey(0);
+        //cv::imshow("test", test);
+
+
+        //cv::waitKey(0);
     }
 
 

@@ -28,7 +28,7 @@ int extractNumber(const cv::String& s);
 
 //***Functions implementations***
 
-std::vector<BoundingBox> loadBoundingBoxData(const std::string& filePath) {
+std::vector<BoundingBox> loadBoundingBoxData(const std::string& filePath, bool hasID) {
     std::vector<BoundingBox> data;
     int fileNum = 0;
     // Go into filePath and for each .txt file
@@ -44,7 +44,8 @@ std::vector<BoundingBox> loadBoundingBoxData(const std::string& filePath) {
                 std::vector<std::string> tokens{ std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>{} };
                 // Create a BoundingBox object and fill it with x1 x2 width height id
                 BoundingBox bb;
-                bb.id = std::stoi(tokens[4]);
+                if(hasID)
+                    bb.id = std::stoi(tokens[4]);
                 bb.x1 = std::stoi(tokens[0]);
                 bb.y1 = std::stoi(tokens[1]);
                 bb.width = std::stoi(tokens[2]);

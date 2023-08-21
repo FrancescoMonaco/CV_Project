@@ -15,8 +15,9 @@ struct BoundingBox {
 
 /// @brief Returns a vector of bounding boxes from the given path
 /// @param filePath , path to the file containing the bounding box data
+/// @param hasID , true if the file contains the id of the bounding box, false otherwise
 /// @return vector of bounding boxes
-std::vector<BoundingBox> loadBoundingBoxData(const std::string& filePath);
+std::vector<BoundingBox> loadBoundingBoxData(const std::string& filePath, bool hasID = true);
 
 /// @brief Returns a vector with the semantic segmentation images
 /// @param filePath path to the file containing the data
