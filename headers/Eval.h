@@ -53,5 +53,10 @@ float computeIoU(const cv::Mat& result, const cv::Mat& pred);
 /// @param path , path for the images
 void showResults(const std::string& source, const std::string& path);
 
+/// @brief Extracts the number from the string
+/// @param s  
+/// @return the number or -1 if no number is found
+int extractNumber(const cv::String& s);
+
 
 #endif // !EVAL_H

@@ -48,17 +48,25 @@ int main()
     }
     std::vector<BoundingBox> processedData = loadBoundingBoxData(rel_path + "/ProcessedBoxes", false);
     //Reorganize the vector into a vector of vectors of BoundingBoxes
-    std::vector<std::vector<BoundingBox>> processedData2 = reshapeBB(processedData);
+    std::vector<std::vector<cv::Rect>> processedData2 = reshapeBB(processedData);
 
     // for each image, keep also the relative fn during the loop
-    int i = 0;
-    for (auto& image : images) {
+    for (size_t k = 0; k < images.size(); k++) {
         //pick the fn of the image
-        cv::String fn = fn[i];
-
-
-        i++;
+         cv::String fn2 = fn[k];
+         int num = extractNumber(fn2);
+         std::cout << num << std::endl;
+         std::cout << "Boxes before cleaning: " << processedData2[num-1].size() << std::endl;
+         cleanRectangles(processedData2[num-1], images[k]);
+         std::cout << "Boxes after cleaning: " << processedData2[num-1].size() << std::endl;
+         //show the image with the boxes
+         for (auto& r : processedData2[num - 1]) {
+			 cv::rectangle(images[k], r, cv::Scalar(0, 255, 0), 2);
+		 }
+         cv::imshow("Image", images[k]);
+		 cv::waitKey(0);
     }
+
 
     /*
     //Evaluation Part

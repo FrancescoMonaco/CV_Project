@@ -16,15 +16,13 @@ const std::vector<std::string> classes = { "background", "1",\
 
 std::vector<cv::Vec3b> customColormap = {
     cv::Vec3b(0, 0, 0),       // Black
-    cv::Vec3b(0, 255, 0),     // Green
-    cv::Vec3b(0, 0, 255),     // Blue
-    cv::Vec3b(255, 255, 0),   // Yellow
+    cv::Vec3b(0, 0, 255),     // Green
+    cv::Vec3b(255, 0, 0),     // Blue
+    cv::Vec3b(0, 255, 0),   // Yellow
 };
 
 namespace fs = std::filesystem;
 
-//***Helper functions***
-int extractNumber(const cv::String& s);
 
 //***Functions implementations***
 

@@ -36,10 +36,11 @@ bool hasOrangeColor(const cv::Mat& image, int orange_lower_bound, int orange_upp
         return false;
 }
 
-void removeUniformRect(std::vector<cv::Rect>& rects, cv::Mat image,int threshold)
+void removeUniformRect(std::vector<cv::Rect>& rects, cv::Mat image, int threshold)
 {
     for (size_t i = 0; i < rects.size(); i++)
     {
+        resizeRect(rects[i], image);
         cv::Rect r = rects[i];
         //Calculate color variation within the detected rectangle
         cv::Mat detected_region = image(cv::Rect(r.x, r.y, r.width, r.height));
@@ -155,20 +156,44 @@ cv::Mat computeDiffusion(cv::Mat image)
     return maskedImage;
 }
 
-std::vector<std::vector<BoundingBox>> reshapeBB(std::vector<BoundingBox> bbs, int NUM_IMAGES)
+std::vector<std::vector<cv::Rect>> reshapeBB(std::vector<BoundingBox> bbs, int NUM_IMAGES)
 {
-    std::vector<std::vector<BoundingBox>> processedData2;
+    std::vector<std::vector<cv::Rect>> processedData2;
     for (int i = 0; i < NUM_IMAGES; i++)
     {
-        std::vector<BoundingBox> temp;
-        processedData2.push_back(temp);
-    }
-
-    //push each box into its id vector
-    for (auto& box : bbs)
-    {
-        processedData2[box.fileNum].push_back(box);
-    }
+		std::vector<cv::Rect> processedData;
+        for (int j = 0; j < bbs.size(); j++)
+        {
+            if (bbs[j].fileNum == i)
+            {
+				cv::Rect r = cv::Rect(bbs[j].x1, bbs[j].y1, bbs[j].width, bbs[j].height);
+				processedData.push_back(r);
+			}
+		}
+		processedData2.push_back(processedData);
+	}
 
     return processedData2;
+}
+
+void resizeRect(cv::Rect& rect, cv::Mat image) {
+    //Resize the rectangle to fit the image
+    if (rect.x < 0)
+    {
+		rect.width += rect.x;
+		rect.x = 0;
+	}
+    if (rect.y < 0)
+    {
+		rect.height += rect.y;
+		rect.y = 0;
+	}
+    if (rect.x + rect.width > image.cols)
+    {
+		rect.width = image.cols - rect.x;
+	}
+    if (rect.y + rect.height > image.rows)
+    {
+		rect.height = image.rows - rect.y;
+	}
 }

@@ -35,6 +35,8 @@ cv::Mat computeDiffusion(cv::Mat image);
 /// @brief Reshapes the vector of bounding boxes in a matrix of bounding boxes
 /// @param bbs list of bounding boxes
 /// @return vector for each image of the list of bounding boxes
-std::vector<std::vector<BoundingBox>> reshapeBB(std::vector<BoundingBox> bbs, int NUM_IMAGES = 15);
+std::vector<std::vector<cv::Rect>> reshapeBB(std::vector<BoundingBox> bbs, int NUM_IMAGES = 15);
 
+/// @brief Resizes the rectangle to the size of the image
+void resizeRect(cv::Rect& r, cv::Mat image);
 #endif // !UTILITY_H
