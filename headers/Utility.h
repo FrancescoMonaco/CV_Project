@@ -2,7 +2,7 @@
 #define UTILITY_H
 // Utility.h : Francesco Pio Monaco
 #include <opencv2/opencv.hpp>
-
+#include "Eval.h"
 
 /// @brief Checks if the image has a considerable amount of orange color
 /// @param image , the image to be checked
@@ -31,5 +31,10 @@ void cleanRectangles(std::vector<cv::Rect>& rects, cv::Mat image);
 /// @param image 
 /// @return the original image masked with the heat diffusion
 cv::Mat computeDiffusion(cv::Mat image);
+
+/// @brief Reshapes the vector of bounding boxes in a matrix of bounding boxes
+/// @param bbs list of bounding boxes
+/// @return vector for each image of the list of bounding boxes
+std::vector<std::vector<BoundingBox>> reshapeBB(std::vector<BoundingBox> bbs, int NUM_IMAGES = 15);
 
 #endif // !UTILITY_H

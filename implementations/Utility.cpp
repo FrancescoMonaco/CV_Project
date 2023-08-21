@@ -154,3 +154,21 @@ cv::Mat computeDiffusion(cv::Mat image)
     test.copyTo(maskedImage, mask);
     return maskedImage;
 }
+
+std::vector<std::vector<BoundingBox>> reshapeBB(std::vector<BoundingBox> bbs, int NUM_IMAGES)
+{
+    std::vector<std::vector<BoundingBox>> processedData2;
+    for (int i = 0; i < NUM_IMAGES; i++)
+    {
+        std::vector<BoundingBox> temp;
+        processedData2.push_back(temp);
+    }
+
+    //push each box into its id vector
+    for (auto& box : bbs)
+    {
+        processedData2[box.fileNum].push_back(box);
+    }
+
+    return processedData2;
+}
