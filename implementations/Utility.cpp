@@ -196,7 +196,7 @@ std::vector<std::vector<cv::Rect>> reshapeBB(std::vector<BoundingBox> bbs, int N
 		std::vector<cv::Rect> processedData;
         for (int j = 0; j < bbs.size(); j++)
         {
-            if (bbs[j].fileNum == i)
+            if (bbs[j].fileNum == i+1)
             {
 				cv::Rect r = cv::Rect(bbs[j].x1, bbs[j].y1, bbs[j].width, bbs[j].height);
 				processedData.push_back(r);
@@ -243,3 +243,67 @@ void resizeRect(cv::Rect& rect, cv::Mat image) {
 		rect.height = image.rows - rect.y;
 	}
 }
+
+std::vector<int> classify(cv::Mat& image, std::vector<cv::Rect> rects) {
+    // Compute and normalize histograms for each bounding box
+    std::vector<cv::Mat> histograms; // Store histograms for each box
+    for (const auto& box : rects) {
+        cv::Mat hist;
+
+        // Copy the bounding box image without modifying the original image
+        cv::Mat boxImage = image(box).clone();
+
+        // Compute histogram in HSV colorspace using all channels
+        cv::cvtColor(boxImage, boxImage, cv::COLOR_BGR2HSV);
+        std::vector<cv::Mat> channels;
+        cv::split(boxImage, channels);
+        int histSize = 256;
+        float range[] = { 0, 256 };
+        const float* histRange = { range };
+        bool uniform = true;
+        bool accumulate = false;
+        // Compute histogram for each channel and merge them
+        std::vector<cv::Mat> channelHist;
+        for (int i = 0; i < channels.size(); i++) {
+            cv::Mat channelHistSingle;
+            cv::calcHist(&channels[i], 1, 0, cv::Mat(), channelHistSingle, 1, &histSize, &histRange, uniform, accumulate);
+            channelHist.push_back(channelHistSingle);
+        }
+        cv::Mat mergedHist;
+        cv::merge(channelHist, mergedHist);
+
+        // Normalize the histogram
+        cv::normalize(mergedHist, hist, 0, 1, cv::NORM_MINMAX, -1, cv::Mat());
+
+        histograms.push_back(hist);
+    }
+
+    // Compute the distance between each pair of histograms
+    std::vector<std::vector<double>> distances;
+    for (size_t i = 0; i < histograms.size(); i++) {
+		std::vector<double> row;
+        for (size_t j = 0; j < histograms.size(); j++) {
+			double dist = cv::compareHist(histograms[i], histograms[j], cv::HISTCMP_CHISQR);
+			row.push_back(dist);
+		}
+		distances.push_back(row);
+	}
+    // Group the bounding boxes into 2 clusters, using the distance matrix, use labels 1 and2 pushinto vector
+    std::vector<int> labels;
+    cv::Mat labelsMat;
+    cv::Mat distancesMat(distances.size(), distances.size(), CV_32F);
+    for (size_t i = 0; i < distances.size(); i++) {
+        for (size_t j = 0; j < distances.size(); j++) {
+            distancesMat.at<float>(i, j) = distances[i][j];
+        }
+    }
+
+    cv::kmeans(distancesMat, 2, labelsMat, cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 10, 1.0), 3, cv::KMEANS_PP_CENTERS);
+    // labels must be 1 and 2
+    for (int i = 0; i < labelsMat.rows; i++) {
+		labels.push_back(labelsMat.at<int>(i, 0) + 1);
+	}
+
+    return labels;
+}
+

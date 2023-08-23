@@ -2,7 +2,7 @@
 
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
-#include <opencv2/core.hpp>
+//#include <opencv2/core.hpp>
 #include <opencv2/features2d.hpp>
 
 #include <string>
@@ -46,7 +46,7 @@ int main()
         cv::Mat test_copy = test.clone();
 
     }
-    std::vector<BoundingBox> processedData = loadBoundingBoxData(rel_path + "/ProcessedBoxes", false);
+    std::vector<BoundingBox> processedData = loadBoundingBoxData(rel_path + "/Masks", true);
     //Reorganize the vector into a vector of vectors of BoundingBoxes
     std::vector<std::vector<cv::Rect>> processedData2 = reshapeBB(processedData);
 
@@ -56,13 +56,23 @@ int main()
          cv::String fn2 = fn[k];
          int num = extractNumber(fn2);
          std::cout << num << std::endl;
-         std::cout << "Boxes before cleaning: " << processedData2[k].size() << std::endl;
-         cleanRectangles(processedData2[k], images[k]);
-         std::cout << "Boxes after cleaning: " << processedData2[k].size() << std::endl;
+         std::cout << "Boxes before cleaning: " << processedData2[num-1].size() << std::endl;
+         //cleanRectangles(processedData2[k], images[k]);
+         //std::cout << "Boxes after cleaning: " << processedData2[k].size() << std::endl;
          //show the image with the boxes
-         for (auto& r : processedData2[k]) {
-			 cv::rectangle(images[k], r, cv::Scalar(0, 255, 0), 2);
+   //      for (auto& r : processedData2[k]) {
+			// cv::rectangle(images[k], r, cv::Scalar(0, 255, 0), 2);
+		 //}
+
+         std::vector<int> labels = classify(images[k], processedData2[num-1]);
+
+         //for each box draw it on the image using different color for the labels
+         for (size_t i = 0; i < processedData2[num-1].size(); i++) {
+			 cv::rectangle(images[k], processedData2[num-1][i], cv::Scalar(0, 255, 0), 2);
+			 cv::putText(images[k], std::to_string(labels[i]), cv::Point(processedData2[num-1][i].x, processedData2[num-1][i].y), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
 		 }
+
+
          cv::imshow("Image", images[k]);
 		 cv::waitKey(0);
     }

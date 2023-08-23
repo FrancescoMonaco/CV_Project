@@ -48,8 +48,13 @@ cv::Mat computeDiffusion(cv::Mat image);
 /// @return vector for each image of the list of bounding boxes
 std::vector<std::vector<cv::Rect>> reshapeBB(std::vector<BoundingBox> bbs, int NUM_IMAGES = 15);
 
+//***Classification Functions***
 
-
+/// @brief 
+/// @param image the image where the rectangles are detected
+/// @param rects the detected rectangles
+/// @return a vector of labels for each rectangle
+std::vector<int> classify(cv::Mat& image, std::vector<cv::Rect> rects);
 
 
 #endif // !UTILITY_H

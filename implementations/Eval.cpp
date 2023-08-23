@@ -28,12 +28,14 @@ namespace fs = std::filesystem;
 
 std::vector<BoundingBox> loadBoundingBoxData(const std::string& filePath, bool hasID, bool reverse) {
     std::vector<BoundingBox> data;
-    int fileNum = 0;
     // Go into filePath and for each .txt file
     for(const auto& entry : fs::directory_iterator(filePath)) {
         if (entry.path().extension() == ".txt") {
             // Open the file
             std::ifstream file(entry.path());
+            //Convert the string to a cv string and call ectractNumber
+            cv::String pt(entry.path().string());
+            int fileNum = extractNumber(pt);
             // Read the file line by line
             std::string line;
             while (std::getline(file, line)) {
@@ -57,7 +59,6 @@ std::vector<BoundingBox> loadBoundingBoxData(const std::string& filePath, bool h
                 // Add the BoundingBox object to the vector
                 data.push_back(bb);
             }
-            fileNum++;
         }
     }
     return data;
@@ -179,6 +180,12 @@ float processSemanticSegmentation(const std::vector<cv::Mat>& resultData, const 
         std::cout << "*";
     }
 
+    //print IoU for each image
+    std::cout << std::endl;
+    for (int i = 0; i < IoU.size(); i++) {
+		std::cout << "IoU " << i+1 << ": " << IoU[i] << std::endl;
+	}
+ 
     // return mean IoU
     float mIoU = 0.0f;
     for (float value : IoU) {
