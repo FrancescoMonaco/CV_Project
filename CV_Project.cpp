@@ -56,11 +56,11 @@ int main()
          cv::String fn2 = fn[k];
          int num = extractNumber(fn2);
          std::cout << num << std::endl;
-         std::cout << "Boxes before cleaning: " << processedData2[num-1].size() << std::endl;
-         cleanRectangles(processedData2[num-1], images[k]);
-         std::cout << "Boxes after cleaning: " << processedData2[num-1].size() << std::endl;
+         std::cout << "Boxes before cleaning: " << processedData2[k].size() << std::endl;
+         cleanRectangles(processedData2[k], images[k]);
+         std::cout << "Boxes after cleaning: " << processedData2[k].size() << std::endl;
          //show the image with the boxes
-         for (auto& r : processedData2[num - 1]) {
+         for (auto& r : processedData2[k]) {
 			 cv::rectangle(images[k], r, cv::Scalar(0, 255, 0), 2);
 		 }
          cv::imshow("Image", images[k]);

@@ -62,41 +62,73 @@ void removeUniformRect(std::vector<cv::Rect>& rects, cv::Mat image, int threshol
 
 void mergeOverlapRect(std::vector<cv::Rect>& rects, int threshold)
 {
+    //if two rectangles overlap on the y axis, merge them into a single rectangle that contains both
     for (size_t i = 0; i < rects.size(); i++)
     {
-        cv::Rect r = rects[i];
-        for (size_t j = 0; j < rects.size(); j++)
+        for (size_t j = i + 1; j < rects.size(); j++)
         {
-            if (j != i)
+			cv::Rect r1 = rects[i];
+			cv::Rect r2 = rects[j];
+            if (r1.y < r2.y)
             {
-                cv::Rect r2 = rects[j];
-                if ((r & r2).area() > threshold * r.area() || (r & r2).area() > threshold * r2.area())
+                if (r1.y + r1.height > r2.y)
                 {
-                    r |= r2;
-                    //If the merged height is greater than 2.5 times the width, then don't put it in the vector but erase the other two
-                    if (r.height > 2.5 * r.width)
+                    if (r1.x < r2.x)
                     {
-                        rects.erase(rects.begin() + i);
-                        rects.erase(rects.begin() + j);
-                        i--;
-                        j--;
-                    }
+                        if (r1.x + r1.width > r2.x)
+                        {
+							//r1 contains r2
+							rects.erase(rects.begin() + j);
+							j--;
+						}
+					}
                     else
                     {
-                        rects[i] = r;
-                        rects.erase(rects.begin() + j);
-                        j--;
-                    }
-                }
-            }
-        }
-    }
+                        if (r2.x + r2.width > r1.x)
+                        {
+							//r2 contains r1
+							rects.erase(rects.begin() + i);
+							i--;
+							break;
+						}
+					}
+				}
+			}
+            else
+            {
+                if (r2.y + r2.height > r1.y)
+                {
+                    if (r1.x < r2.x)
+                    {
+                        if (r1.x + r1.width > r2.x)
+                        {
+							//r1 contains r2
+							rects.erase(rects.begin() + j);
+							j--;
+						}
+					}
+                    else
+                    {
+                        if (r2.x + r2.width > r1.x)
+                        {
+							//r2 contains r1
+							rects.erase(rects.begin() + i);
+							i--;
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void cleanRectangles(std::vector<cv::Rect>& rects, cv::Mat image)
 {
     cv::Mat mskd = computeDiffusion(image);
-    removeUniformRect(rects, mskd, 10);
+    removeUniformRect(rects, mskd, 30);
+    removeFlatRect(rects);
+    mergeOverlapRect(rects, 0);
 }
 
 cv::Mat computeDiffusion(cv::Mat image)
@@ -174,6 +206,20 @@ std::vector<std::vector<cv::Rect>> reshapeBB(std::vector<BoundingBox> bbs, int N
 	}
 
     return processedData2;
+}
+
+void removeFlatRect(std::vector<cv::Rect>& rects)
+{
+    //for each rectangle, check if it is flat and remove it if it is
+    for (size_t i = 0; i < rects.size(); i++)
+    {
+		cv::Rect r = rects[i];
+        if (r.width > 2.5 * r.height)
+        {
+			rects.erase(rects.begin() + i);
+			i--;
+		}
+	}
 }
 
 void resizeRect(cv::Rect& rect, cv::Mat image) {

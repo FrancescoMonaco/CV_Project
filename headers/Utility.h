@@ -11,11 +11,20 @@
 /// @return true if the image has orange color, false otherwise
 bool hasOrangeColor(const cv::Mat& image, int orange_lower_bound = 120, int orange_upper_bound = 255);
 
+//***Rectangles Utility Functions***
+
 /// @brief Removes the rectangles that have a uniform color from the vector
 /// @param rects vector of rectangles
 /// @param image where the color variation is calculated
 /// @param threshold cutoff value for the color variation
 void removeUniformRect(std::vector<cv::Rect>& rects, cv::Mat image, int threshold = 10);
+
+/// @brief Removes the rectangles where one of the sides is too small
+/// @param rects 
+void removeFlatRect(std::vector<cv::Rect>& rects);
+
+/// @brief Resizes the rectangle to the size of the image
+void resizeRect(cv::Rect& r, cv::Mat image);
 
 /// @brief Merges the rectangles that overlap of the percentage specified by the threshold
 /// @param rects vector of rectangles
@@ -27,6 +36,8 @@ void mergeOverlapRect(std::vector<cv::Rect>& rects, int threshold = 10);
 /// @param image where the rectangles are detected
 void cleanRectangles(std::vector<cv::Rect>& rects, cv::Mat image);
 
+//***Other Utility Functions***
+
 /// @brief Computes the heat diffusion of the image using a heat equation
 /// @param image 
 /// @return the original image masked with the heat diffusion
@@ -37,6 +48,8 @@ cv::Mat computeDiffusion(cv::Mat image);
 /// @return vector for each image of the list of bounding boxes
 std::vector<std::vector<cv::Rect>> reshapeBB(std::vector<BoundingBox> bbs, int NUM_IMAGES = 15);
 
-/// @brief Resizes the rectangle to the size of the image
-void resizeRect(cv::Rect& r, cv::Mat image);
+
+
+
+
 #endif // !UTILITY_H
