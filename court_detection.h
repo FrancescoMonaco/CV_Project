@@ -1,16 +1,17 @@
 #pragma once
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/core.hpp>
-#include <opencv2/features2d.hpp>
-#include <string>
-#include <iostream>
-#include <vector>
+#include "header.h"
 
 void box_elimination(cv::Mat image,cv::Mat img_out,std::string str );
 
 void fill_image(cv::Mat image);
 
-void court_localization(cv::Mat image);
+void color_quantization(cv::Mat image,cv::Mat& clustered);
 
-void color_quantization(cv::Mat image);
+void field_distinction(cv::Mat clustered,cv::Mat& segmented_field);
+
+//actually not used 
+void lines_detector(cv::Mat image);
+
+//actually not used
+void court_localization(cv::Mat image, cv::Mat& edges);
+

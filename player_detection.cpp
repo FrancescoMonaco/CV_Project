@@ -1,6 +1,4 @@
 #include "player_detection.h"
-#include<fstream>
-#include "court_detection.h"
 
 void player_segmentation(cv::Mat image, cv::Mat seg_image, std::string str){
 	
@@ -19,26 +17,26 @@ void player_segmentation(cv::Mat image, cv::Mat seg_image, std::string str){
 
 		//take the string with the position of bounding box
 		while (std::getline(file, line)) {
-			int x, y, x_last, y_last;
+			int x, y, w, h;
 
 			std::istringstream iss(line);
 			
-			iss >> x >> y >> x_last >> y_last;
+			iss >> x >> y >> w >> h;
 
-			cv::Mat img_out(y_last-y, x_last - x, CV_8UC3);
+			cv::Mat img_out( h, w, CV_8UC3);
 			//isolate the box CHECK
 			
-			for (int j = y; j < y_last; j++) {
-				for (int i = x; i < x_last; i++) {
+			for (int j = y; j < y+h; j++) {
+				for (int i = x; i < x+w; i++) {
 
 					img_out.at<cv::Vec3b>(j-y, i-x) = image.at<cv::Vec3b>(j,i);
 				}
 			}
-			//cv::imshow("box", img_out);
-			//cv::waitKey(0);
-
-			color_quantization(img_out);
-
+			cv::imshow("box", img_out);
+			cv::waitKey(0);
+			/*cv::Mat clustered;
+;			color_quantization(img_out,clustered);
+*/
 			//start segmentation with canny
 
 	 
@@ -68,10 +66,15 @@ void player_segmentation(cv::Mat image, cv::Mat seg_image, std::string str){
 			cv::imshow("edges", edges);
 			cv::waitKey(0);
 
+			close_lines(edges);
+			
 
+			fill_segments(edges);
 			//apply heat diffusion
-			heat_diffusion(edges);
-
+			//heat_diffusion(edges);
+			//cv::Mat seg_image;
+			//segmentation(img_out,seg_image );
+			cv::destroyAllWindows();
 		}
 
 	}
@@ -85,47 +88,47 @@ void player_segmentation(cv::Mat image, cv::Mat seg_image, std::string str){
 }
 
 
-void heat_diffusion(cv::Mat canny_image){
-	// Read the Canny edge image
-	cv::Mat E = canny_image.clone();
 
-	// Normalize the Canny image to the range [0, 1]
-	E.convertTo(E, CV_32F, 1.0 / 255.0);
 
-	// Define image size
-	int width = E.cols;
-	int height = E.rows;
+void close_lines(cv::Mat& edge_image){
+	
+	int morph_size = 3;
 
-	// Create an image with initial condition
-	cv::Mat I(height, width, CV_32F);
-	I = 1.0 - E;
+	cv::Mat element = getStructuringElement(cv::MORPH_RECT, cv::Size(morph_size ,  morph_size));
+	
+	cv::Mat img_out;
+	morphologyEx(edge_image, img_out, cv::MORPH_CLOSE, element, cv::Point(-1,-1), 3);
+	
+	cv::imshow("dilation+erosion", img_out);
+	cv::waitKey(0);
+	edge_image = img_out.clone();
+}
 
-	// Define constants
-	float dt = 0.1; // Time step
-	float alpha = 0.1; // Diffusion coefficient
 
-	// Create a window for visualization
-	cv::namedWindow("Heat Diffusion", cv::WINDOW_NORMAL);
+void fill_segments(cv::Mat& edge_image) {
 
-	// Time loop
-	for (float t = 0; t <100; t += dt) {
-		// Compute Laplacian
-		cv::Mat laplacian;
-		cv::Laplacian(I, laplacian, CV_32F);
+	std::vector<std::vector<cv::Point> > contours;
+	std::vector<cv::Vec4i> hierarchy;
+	cv::Mat dst = cv::Mat::zeros(edge_image.rows, edge_image.cols, CV_8UC3);
 
-		// Apply heat diffusion equation
-		I = I + alpha * dt * laplacian;
-
-		// Apply boundary condition
-		I.setTo(0, I == 1);
-
-		// Display the image
-		
+	findContours(edge_image, contours, hierarchy,
+		cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
+	// iterate through all the top-level contours,
+	// draw each connected component with its own random color
+	int idx = 0;
+	for (; idx >= 0; idx = hierarchy[idx][0])
+	{
+		cv::Scalar color(255,255,255);
+		drawContours(dst, contours, idx, color, cv::FILLED, 8, hierarchy);
 	}
+	
+	cv::imshow("Components", dst);
+	cv::waitKey(0);
+}
 
-	cv::imshow("Heat Diffusion", I);
-	cv::waitKey(0); // Delay for visualization
-	cv::destroyAllWindows();
+void create_segmented_image(cv::Mat segmeted_filed, cv::Mat segmented_player,std::vector<int> box_coordinates, std::string save){
+
 
 
 }
+
