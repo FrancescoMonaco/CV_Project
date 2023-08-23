@@ -26,7 +26,7 @@ namespace fs = std::filesystem;
 
 //***Functions implementations***
 
-std::vector<BoundingBox> loadBoundingBoxData(const std::string& filePath, bool hasID) {
+std::vector<BoundingBox> loadBoundingBoxData(const std::string& filePath, bool hasID, bool reverse) {
     std::vector<BoundingBox> data;
     int fileNum = 0;
     // Go into filePath and for each .txt file
@@ -42,8 +42,12 @@ std::vector<BoundingBox> loadBoundingBoxData(const std::string& filePath, bool h
                 std::vector<std::string> tokens{ std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>{} };
                 // Create a BoundingBox object and fill it with x1 x2 width height id
                 BoundingBox bb;
-                if(hasID)
+                if(hasID and !reverse)
                     bb.id = std::stoi(tokens[4]);
+                if (hasID and reverse) {
+                    bb.id = std::stoi(tokens[4]);
+                    bb.id = (bb.id == 1) ? 2 : 1;
+                }
                 bb.x1 = std::stoi(tokens[0]);
                 bb.y1 = std::stoi(tokens[1]);
                 bb.width = std::stoi(tokens[2]);
@@ -59,12 +63,24 @@ std::vector<BoundingBox> loadBoundingBoxData(const std::string& filePath, bool h
     return data;
 }
 
-std::vector<cv::Mat> loadSemanticSegmentationData(const std::string& filePath) {
+std::vector<cv::Mat> loadSemanticSegmentationData(const std::string& filePath, bool reverse) {
     //for each .png file that has _bin in the name in filePath push back the image in the vector
     std::vector<cv::Mat> data;
     for (const auto& entry : fs::directory_iterator(filePath)) {
         if (entry.path().extension() == ".png" && entry.path().filename().string().find("_bin") != std::string::npos) {
             data.push_back(cv::imread(entry.path().string(), cv::IMREAD_GRAYSCALE));
+        }
+        // if reverse then 1 and 2 are swapped
+        if (reverse) {
+            for (cv::Mat& image : data) {
+                cv::MatIterator_<uchar> it, end;
+                for (it = image.begin<uchar>(), end = image.end<uchar>(); it != end; ++it) {
+                    if (*it == 1)
+                        *it = 2;
+                    else if (*it == 2)
+                        *it = 1;
+                }
+            }
         }
     }
     return data;

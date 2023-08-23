@@ -154,7 +154,7 @@ cv::Mat computeDiffusion(cv::Mat image)
     int iterations = 40;
     cv::Mat diffusedImage = edges.clone();
 
-    //Apply heat diffusion iteratively
+    //Apply diffusion iteratively
     for (int iter = 0; iter < iterations; ++iter) {
         cv::Mat newDiffusedImage = diffusedImage.clone();
 
