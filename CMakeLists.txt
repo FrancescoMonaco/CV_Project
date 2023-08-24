@@ -18,7 +18,7 @@ add_library(evaluation headers/Eval.h implementations/Eval.cpp)
 add_library(base headers/header.h)
 
 # Add the executable
-add_executable(${PROJECT_NAME} Project_CV.cpp)
+add_executable(${PROJECT_NAME} main.cpp)
 
 # Link OpenCV libraries
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})

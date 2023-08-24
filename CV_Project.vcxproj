@@ -133,7 +133,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CV_Project.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="implementations\court_detection.cpp" />
     <ClCompile Include="implementations\Eval.cpp" />
     <ClCompile Include="implementations\hw_field.cpp" />
