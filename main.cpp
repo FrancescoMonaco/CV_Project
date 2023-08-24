@@ -1,14 +1,5 @@
 // CV_Project.cpp : Francesco Pio Monaco
 
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
-//#include <opencv2/core.hpp>
-#include <opencv2/features2d.hpp>
-
-#include <string>
-#include <iostream>
-#include <vector>
-
 #include "../CV_Project/headers/Utility.h" 
 #include "../CV_Project/headers/header.h"
 #include "../CV_Project/headers/court_detection.h"
