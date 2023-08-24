@@ -24,6 +24,21 @@
     <ClCompile Include="implementations\Utility.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
+    <ClCompile Include="implementations\court_detection.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="implementations\hw_field.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="implementations\player_detection.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="implementations\segmentation.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="implementations\write_results.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt">
@@ -35,6 +50,21 @@
       <Filter>File di origine</Filter>
     </ClInclude>
     <ClInclude Include="headers\Utility.h">
+      <Filter>File di origine</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\court_detection.h">
+      <Filter>File di origine</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\header.h">
+      <Filter>File di origine</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\player_detection.h">
+      <Filter>File di origine</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\segmentation.h">
+      <Filter>File di origine</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\write_results.h">
       <Filter>File di origine</Filter>
     </ClInclude>
   </ItemGroup>

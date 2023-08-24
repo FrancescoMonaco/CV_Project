@@ -134,15 +134,25 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CV_Project.cpp" />
+    <ClCompile Include="implementations\court_detection.cpp" />
     <ClCompile Include="implementations\Eval.cpp" />
+    <ClCompile Include="implementations\hw_field.cpp" />
+    <ClCompile Include="implementations\player_detection.cpp" />
+    <ClCompile Include="implementations\segmentation.cpp" />
     <ClCompile Include="implementations\Utility.cpp" />
+    <ClCompile Include="implementations\write_results.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="headers\court_detection.h" />
     <ClInclude Include="headers\Eval.h" />
+    <ClInclude Include="headers\header.h" />
+    <ClInclude Include="headers\player_detection.h" />
+    <ClInclude Include="headers\segmentation.h" />
     <ClInclude Include="headers\Utility.h" />
+    <ClInclude Include="headers\write_results.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
