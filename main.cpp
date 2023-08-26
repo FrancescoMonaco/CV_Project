@@ -78,22 +78,22 @@ int main()
 
 
          //eliminate boxes inside the image to have a better field detection 
-         box_elimination(image_box, image_box, boxes);
+         //box_elimination(image_box, image_box, boxes);
 
          //cover the holes left by the remotion of the boxes
-         fill_image(image_box);
+         //fill_image(image_box);
 
          //clusterize the image in order to detect the field and the background  
          cv::Mat clustered;
-         color_quantization(image_box, clustered);
+         //color_quantization(image_box, clustered);
 
          //assign specific label for the test task
          cv::Mat segmented_field = clustered.clone();
-         field_distinction(clustered, segmented_field);
+         //field_distinction(clustered, segmented_field);
 
 
          //start players segmentation
-         //player_segmentation(test, image_box, boxes);
+         player_segmentation(images[k], image_box, boxes);
 
          //unire cose di player segmentation and field 
 

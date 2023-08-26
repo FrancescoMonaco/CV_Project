@@ -288,7 +288,7 @@ std::vector<int> classify(cv::Mat& image, std::vector<cv::Rect> rects) {
 		}
 		distances.push_back(row);
 	}
-    // Group the bounding boxes into 2 clusters, using the distance matrix, use labels 1 and2 pushinto vector
+    // Group the bounding boxes into 2 clusters, using the distance matrix
     std::vector<int> labels;
     cv::Mat labelsMat;
     cv::Mat distancesMat(distances.size(), distances.size(), CV_32F);

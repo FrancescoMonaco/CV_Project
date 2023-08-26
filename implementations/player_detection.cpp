@@ -39,16 +39,26 @@ void player_segmentation(cv::Mat image, cv::Mat seg_image, std::string str){
 */
 			//start segmentation with canny
 
-	 
 			cv::Mat img_grey;
 			cvtColor(img_out, img_grey, cv::COLOR_BGR2GRAY);
-			
+			//smooth the image in a very strong way
+			cv::GaussianBlur(img_grey, img_grey, cv::Size(7, 7), 0, 0, cv::BORDER_DEFAULT);
+			// Calculate the minimum and maximum pixel values in the image
+			double minVal, maxVal;
+			cv::minMaxLoc(img_grey, &minVal, &maxVal);
+
+			// Apply histogram stretching for contrast adjustment
+			cv::Mat stretchedImage;
+			double alpha = 255.0 / (maxVal - minVal);
+			double beta = -minVal * alpha;
+			img_grey.convertTo(stretchedImage, -1, alpha, beta);
+
 
 			cv::Mat grad_x, grad_y;
 			cv::Mat abs_grad_x, abs_grad_y, test_grad;
 
-			cv::Sobel(img_grey, grad_x, CV_16S, 1, 0, 3, 1, 0, cv::BORDER_DEFAULT);
-			cv::Sobel(img_grey, grad_y, CV_16S, 0, 1, 3, 1, 0, cv::BORDER_DEFAULT);
+			cv::Sobel(stretchedImage, grad_y, CV_16S, 0, 1, 3, 1, 0, cv::BORDER_DEFAULT);
+			cv::Sobel(stretchedImage, grad_x, CV_16S, 1, 0, 3, 1, 0, cv::BORDER_DEFAULT);
 			cv::convertScaleAbs(grad_x, abs_grad_x);
 			cv::convertScaleAbs(grad_y, abs_grad_y);
 			cv::addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, test_grad);
@@ -61,7 +71,7 @@ void player_segmentation(cv::Mat image, cv::Mat seg_image, std::string str){
 			cv::Mat edges;
 
 
-			cv::Canny(img_grey, edges, canny_c * median / 4,canny_c * median/2);
+			cv::Canny(stretchedImage, edges, canny_c * median / 4,canny_c * median/2);
 
 			cv::imshow("edges", edges);
 			cv::waitKey(0);
@@ -74,6 +84,8 @@ void player_segmentation(cv::Mat image, cv::Mat seg_image, std::string str){
 			//heat_diffusion(edges);
 			//cv::Mat seg_image;
 			//segmentation(img_out,seg_image );
+
+
 			cv::destroyAllWindows();
 		}
 
@@ -113,6 +125,7 @@ void fill_segments(cv::Mat& edge_image) {
 
 	findContours(edge_image, contours, hierarchy,
 		cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
+
 	// iterate through all the top-level contours,
 	// draw each connected component with its own random color
 	int idx = 0;
