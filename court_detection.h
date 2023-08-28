@@ -17,3 +17,4 @@ void lines_detector(cv::Mat image);
 //actually not used
 void court_localization(cv::Mat image, cv::Mat& edges);
 
+double standard_deviation(cv::Mat box_image, cv::Mat mask);

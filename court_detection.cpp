@@ -1,6 +1,5 @@
 #include"court_detection.h"
-#include "peer_filter.h"
-#include "color_quantization.h"
+
 #include <algorithm>
 
 void box_elimination(cv::Mat image, cv::Mat img_out, std::string str)
@@ -103,7 +102,7 @@ void color_quantization(cv::Mat image,cv::Mat& img_out) {
 	
 	int numClusters = 3; // Number of desired colors after quantization
 	cv::Mat labels, centers;
-	cv::TermCriteria criteria=	cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 100, 0.1);
+	cv::TermCriteria criteria=	cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 10, 0.1);
 	
 	std::vector<cv::Vec3b> vec;
 	cv::Mat mask(image.rows,image.cols, CV_8UC1);
@@ -145,7 +144,11 @@ void color_quantization(cv::Mat image,cv::Mat& img_out) {
 	image.convertTo(floatImage, CV_32FC3, 1.0 / 255.0);
 	cv::Mat flat = floatImage.reshape(1, floatImage.rows * floatImage.cols);
 
-	cv::kmeans(flattened_data, numClusters, labels, criteria, 10, cv::KMEANS_PP_CENTERS,centers);
+	cv::kmeans(flattened_data, numClusters, labels, criteria, 100, cv::KMEANS_PP_CENTERS,centers);
+
+
+
+	
 
 
 	
@@ -184,17 +187,20 @@ void color_quantization(cv::Mat image,cv::Mat& img_out) {
 
 	}
 
+
+
+
 	//lines_detector(clustered);
 
 	//cv::Mat converted;
 	//clustered.convertTo(converted, CV_8U);
 	//clustered.convertTo(clustered, CV_8U);
 	//cv::imshow("Original Image", image);
-	//cv::imshow("Quantized Image", clustered);
-	//cv::waitKey(0);
+	cv::imshow("Quantized Image", clustered);
+	cv::waitKey(0);
 	img_out = clustered.clone();
 	
-	lines_detector(img_out);
+	//lines_detector(img_out);
 
 
 }
@@ -219,21 +225,19 @@ void field_distinction(cv::Mat image_box,cv::Mat clustered,cv::Mat& segmented_fi
 
 	int larger=std::max(pixel_count1,pixel_count2);
 	larger = std::max(larger, pixel_count3);
-
-	//for each region i calculate the standar deviation
-	standard_deviation(image_box,mask1);
-	standard_deviation(image_box,mask2);
-	standard_deviation(image_box,mask3);
-
-
+	
+	
 	if (pixel_count1 ==larger) {
 		std::cout << "1\n";
+
 		segmented_field.setTo(green, mask1);
-		segmented_field.setTo(cv::Vec3b(0,0,0), mask2);
-		segmented_field.setTo(cv::Vec3b(0,0,0), mask3);
+		segmented_field.setTo(cv::Vec3b(0, 0, 0), mask2);
+		segmented_field.setTo(cv::Vec3b(0, 0, 0), mask3);
+
 	}
 	else if(pixel_count2==larger){
 		std::cout << "2\n";
+		
 		segmented_field.setTo(green, mask2);
 		segmented_field.setTo(cv::Vec3b(0, 0, 0), mask1);
 		segmented_field.setTo(cv::Vec3b(0, 0, 0), mask3);
@@ -241,78 +245,15 @@ void field_distinction(cv::Mat image_box,cv::Mat clustered,cv::Mat& segmented_fi
 	}
 	else {
 		std::cout << "3\n";
+		
+		
 		segmented_field.setTo(green, mask3);
-		segmented_field.setTo(cv::Vec3b(0, 0, 0), mask1);
 		segmented_field.setTo(cv::Vec3b(0, 0, 0), mask2);
-
+		segmented_field.setTo(cv::Vec3b(0, 0, 0), mask1);
 	}
 	cv::imshow("segmented field", segmented_field);
 	cv::waitKey(0);
 }
-
-std::vector<double> standard_deviation(cv::Mat box_image, cv::Mat mask) {
-
-	double sumr, sumg, sumb;
-	int count;
-	
-	// calculate the mean of each channel 
-	for (int i = 0; i < mask.rows; i++) {
-		for (int j = 0; j < mask.cols;j++) {
-
-			if (mask.at<uchar>(i, j) ==1 ) {  
-				sumr += box_image.at<cv::Vec3b>(i, j)[0];
-				sumg += box_image.at<cv::Vec3b>(i, j)[1];
-				sumb += box_image.at<cv::Vec3b>(i, j)[2];
-				count++;
-			}
-		}
-	}
-
-	sumr= sumr / count;
-	sumg= sumg / count;
-	sumb= sumb / count;
-
-
-	//calculate the standard deviation
-	
-	double sum_squared_diffr = 0.0;
-	double sum_squared_diffg = 0.0;
-	double sum_squared_diffb = 0.0;
-	
-	for (int y = 0; y < mask.rows; ++y) {
-		for (int x = 0; x < mask.cols; ++x) {
-			
-			if (mask.at<uchar>(y, x) ==1 ) {  // Assuming binary mask
-				double diffr = box_image.at<cv::Vec3b>(y, x)[0] - sumr;
-				double diffg = box_image.at<cv::Vec3b>(y, x)[1] - sumg;
-				double diffb = box_image.at<cv::Vec3b>(y, x)[2] - sumb;
-				
-				sum_squared_diffr += diffr * diffr;
-				sum_squared_diffg += diffg * diffg;
-				sum_squared_diffb += diffb * diffb;
-				
-				
-			}
-		}
-	}
-
-	double sdr=std::sqrt(sum_squared_diffr / count);
-	double sdg=std::sqrt(sum_squared_diffg / count);
-	double sdb=std::sqrt(sum_squared_diffb / count);
-	
-	//create the vector containing the standard deviations for each channel
-
-	std::vector<double> standars;
-	standars.push_back(sdr);
-	standars.push_back(sdg);
-	standars.push_back(sdb);
-
-	return standars;
-
-}
-
-
-
 
 
 //localize the field lines by using hough transform not used 
