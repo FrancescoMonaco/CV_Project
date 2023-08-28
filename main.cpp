@@ -6,11 +6,12 @@
 #include "../CV_Project/headers/player_detection.h"
 #include "../CV_Project/headers/write_results.h"
 
-
-//Constants, later to be moved to a config file
+// ***STRING CONSTANTS***
 const std::string rel_path = "D:/Download/Sport_scene_dataset";
+const std::string partial = "/ProcessedBoxes/";
+const std::string complete = "/Predictions/";
 
-
+// ***MAIN***
 int main()
 {
 
@@ -34,6 +35,8 @@ int main()
     {
         //Create a copy of the image to work on
         cv::Mat test_copy = test.clone();
+
+
 
     }
     std::vector<BoundingBox> processedData = loadBoundingBoxData(rel_path + "/Masks", true);
@@ -78,22 +81,22 @@ int main()
 
 
          //eliminate boxes inside the image to have a better field detection 
-         //box_elimination(image_box, image_box, boxes);
+         box_elimination(image_box, image_box, boxes);
 
          //cover the holes left by the remotion of the boxes
          //fill_image(image_box);
 
          //clusterize the image in order to detect the field and the background  
          cv::Mat clustered;
-         //color_quantization(image_box, clustered);
+        // color_quantization(image_box, clustered);
 
          //assign specific label for the test task
          cv::Mat segmented_field = clustered.clone();
-         //field_distinction(clustered, segmented_field);
+         //field_distinction(clustered, clustered, segmented_field);
 
 
          //start players segmentation
-         player_segmentation(images[k], image_box, boxes);
+         //player_segmentation(images[k], image_box, boxes);
 
          //unire cose di player segmentation and field 
 

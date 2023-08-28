@@ -1,40 +1,14 @@
 #include "../headers/Utility.h"
+#include <fstream>
 // Utility.cpp : Francesco Pio Monaco
 
 //Constants for the utility functions
-    //Thresholds for the orange color
-const double thres_high_1 = 0.328, thres_low_1 = 0.20, thres_high_2 = 0.16, thres_low_2 = 0.14;
 	//Multiplicators for canny and the heat diffusion
 const int canny_c = 9, alpha = 1; const double lambda = 1;
 
 
 //Implementations
-bool hasOrangeColor(const cv::Mat& image, int orange_lower_bound, int orange_upper_bound) {
 
-    // Count variables
-    int total_pixels = image.rows * image.cols;
-    int orange_pixels = 0;
-
-    for (int y = 0; y < image.rows; y++) {
-        for (int x = 0; x < image.cols; x++) {
-            cv::Vec3b pixel = image.at<cv::Vec3b>(y, x);
-            int blue = pixel[0];
-            int green = pixel[1];
-            int red = pixel[2];
-
-            if (red >= orange_lower_bound && green >= orange_lower_bound && blue <= orange_upper_bound) {
-                orange_pixels++;
-            }
-        }
-    }
-
-    if ( ((static_cast<double>(orange_pixels) / total_pixels) >= thres_low_1 && (static_cast<double>(orange_pixels) / total_pixels) < thres_high_1) ||
-         ((static_cast<double>(orange_pixels) / total_pixels) >= thres_low_2 && (static_cast<double>(orange_pixels) / total_pixels) < thres_high_2)
-        )
-        return true;
-    else
-        return false;
-}
 
 void removeUniformRect(std::vector<cv::Rect>& rects, cv::Mat image, int threshold)
 {
@@ -305,5 +279,26 @@ std::vector<int> classify(cv::Mat& image, std::vector<cv::Rect> rects) {
 	}
 
     return labels;
+}
+
+void writeBB(cv::Mat& image, std::vector<cv::Rect> rects, std::vector<int> labels, std::string rel_path)
+{
+    std::ofstream file(rel_path);
+
+    if (!file.is_open()) {
+        std::cerr << "Error opening file: " << rel_path << std::endl;
+        return;
+    }
+
+    // Write the bounding boxes
+    for (size_t i = 0; i < rects.size(); ++i) {
+        cv::Rect rect = rects[i];
+        int label = labels[i];
+        
+        // Write the data in the format x y width height label
+        file << rect.x << " " << rect.y << " " << rect.width << " " << rect.height << " " << label << "\n";
+    }
+
+    file.close();
 }
 

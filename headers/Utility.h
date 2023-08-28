@@ -4,13 +4,6 @@
 #include <opencv2/opencv.hpp>
 #include "Eval.h"
 
-/// @brief Checks if the image has a considerable amount of orange color
-/// @param image , the image to be checked
-/// @param orange_lower_bound , the lower bound for the orange color
-/// @param orange_upper_bound , the upper bound for the orange color
-/// @return true if the image has orange color, false otherwise
-bool hasOrangeColor(const cv::Mat& image, int orange_lower_bound = 120, int orange_upper_bound = 255);
-
 //***Rectangles Utility Functions***
 
 /// @brief Removes the rectangles that have a uniform color from the vector
@@ -55,6 +48,13 @@ std::vector<std::vector<cv::Rect>> reshapeBB(std::vector<BoundingBox> bbs, int N
 /// @param rects the detected rectangles
 /// @return a vector of labels for each rectangle
 std::vector<int> classify(cv::Mat& image, std::vector<cv::Rect> rects);
+
+/// @brief Writes the bounding boxes on a file
+/// @param image the image where the rectangles are detected
+/// @param rects the detected rectangles
+/// @param labels the labels of the rectangles
+/// @param rel_path the relative path of the file
+void writeBB(cv::Mat& image, std::vector<cv::Rect> rects, std::vector<int> labels, std::string rel_path);
 
 
 #endif // !UTILITY_H

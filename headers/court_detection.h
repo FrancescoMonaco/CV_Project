@@ -2,13 +2,15 @@
 #define COURT_DETECTION_H
 #include "header.h"
 
-void box_elimination(cv::Mat image,cv::Mat img_out,std::string str );
+void box_elimination(cv::Mat image, cv::Mat img_out, std::string str);
 
-void fill_image(cv::Mat image);
+void fill_image(cv::Mat& image);
 
-void color_quantization(cv::Mat image,cv::Mat& clustered);
+void color_quantization(cv::Mat image, cv::Mat& clustered);
 
-void field_distinction(cv::Mat clustered,cv::Mat& segmented_field);
+void field_distinction(cv::Mat image_box, cv::Mat clustered, cv::Mat& segmented_field);
+
+void merge_clusters(cv::Mat& labels, cv::Mat& centers, float merge_threshold);
 
 //actually not used 
 void lines_detector(cv::Mat image);
