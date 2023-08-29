@@ -1,7 +1,7 @@
 #pragma once
 #include "header.h"
 
-void box_elimination(cv::Mat image,cv::Mat img_out,std::string str );
+void player_elimination(cv::Mat image, cv::Mat img_out, cv::Mat& mask);
 
 void fill_image(cv::Mat& image);
 
@@ -16,5 +16,3 @@ void lines_detector(cv::Mat image);
 
 //actually not used
 void court_localization(cv::Mat image, cv::Mat& edges);
-
-double standard_deviation(cv::Mat box_image, cv::Mat mask);

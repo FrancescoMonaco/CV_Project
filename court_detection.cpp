@@ -2,50 +2,22 @@
 
 #include <algorithm>
 
-void box_elimination(cv::Mat image, cv::Mat img_out, std::string str)
-{	
-	//file with boxes 
-	std::ifstream file(str);
 
-	if (file.is_open()) {
-		
-		std::string line;
-		
-		//take the string with the position of bounding box
-		while (std::getline(file, line)) {
-			int x,y,w,h;
-
-			std::istringstream iss(line);
-			
-			iss >> x >> y >> w >> h;
-			
-			/*
-			std::cout << x << std::endl;
-			std::cout << y << std::endl;
-			std::cout << w << std::endl;
-			std::cout << h << std::endl;
-			*/
-
-			//delete the box 
-			for (int i = x; i <= x+w; i++) {
-				for (int j = y; j <= y+h; j++) {
-					
-					img_out.at<cv::Vec3b>(j, i) = cv::Vec3b(0, 0, 0);
-
-				}
+//i don't consider the players which have their own segmentation path
+void player_elimination(cv::Mat image, cv::Mat img_out,cv::Mat& mask)
+{
+	//clone the original image
+	cv::Mat usage = image.clone();
+	
+	for (int i = 0; i < mask.rows; i++) {
+		for (int j = 0; j < mask.cols; j++) {
+			if (mask.at<uchar>(i, j) == 1) {
+				//create a ,ask whithout considering the players, that will be segmented apart
+				usage.at<cv::Vec3b>(i,j) = cv::Vec3b(0,0,0);
 			}
 		}
-
-	}else {
-
-		std::cout << "error path\n";
-
 	}
 
-	//visualize the image
-	//cv::imshow("image w/out boxes", img_out);
-	//cv::waitKey(0);
-	
 }
 
 void fill_image(cv::Mat& image){
