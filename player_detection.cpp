@@ -5,14 +5,6 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str){
 	
 	std::ifstream file(str);
 
-	//clone the starting image 
-	//img_out = image.clone();
-	//cv::imshow("image ", img_out);
-	//cv::waitKey(0);
-
-	
-
-
 	
 	if (file.is_open()) {
 
@@ -43,7 +35,7 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str){
 
 			
 			cv::Mat img_grey;
-			cvtColor(img_out, img_grey, cv::COLOR_BGR2GRAY);
+			cvtColor(clustered, img_grey, cv::COLOR_BGR2GRAY);
 			
 			cv::Mat grad_x, grad_y;
 			cv::Mat abs_grad_x, abs_grad_y, test_grad;
@@ -58,24 +50,73 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str){
 			cv::meanStdDev(test_grad, mean, stddev);
 			double median = mean[0];
 			int canny_c = 5;
+			
 			//std::cout << "Median: " << median << std::endl;
+			
 			cv::Mat edges;
 
 
 			cv::Canny(img_grey, edges, canny_c*median/4, canny_c * median / 2,3,true);
 			
-			
-			cv::imshow("edges", edges);
+			// Find contours in the edge image
+			std::vector<std::vector<cv::Point>> contours;
+			cv::findContours(edges, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+
+			// Define a threshold for edge length
+			double minLength = 50.0;
+
+			// Create a mask to keep edges longer than the threshold
+			cv::Mat mask = cv::Mat::zeros(edges.size(), CV_8U);
+
+			for (size_t i = 0; i < contours.size(); i++) {
+
+				if (cv::arcLength(contours[i], true) >= minLength) {
+					std::vector<std::vector<cv::Point>> contourSubset(1, contours[i]);
+					cv::drawContours(mask, contourSubset, -1, cv::Scalar(255), cv::LINE_4);
+
+				}
+			}
+
+
+			cv::Mat displayMask;
+			mask.convertTo(displayMask, CV_8U);
+
+			cv::imshow("Mask Image", displayMask);
 			cv::waitKey(0);
 
-			close_lines(edges);
+			close_lines(displayMask);
 			
 
-			fill_segments(edges);
+			fill_segments(displayMask);
 			
-			
+			cv::Mat segmented_image(mask.rows,mask.cols,CV_8UC3);
+
+			for (int i = 0; i < mask.rows; i++) {
+				for (int j = 0; j < mask.cols; j++) {
+					if (displayMask.at<uchar>(i, j) == 255) {
+
+						segmented_image.at<cv::Vec3b>(i, j) = clustered.at<cv::Vec3b>(i,j);
+
+					}
+				}
+			}
+
+			cv::imshow("segmentation", segmented_image);
+			cv::waitKey(0);
+
 			cv::destroyAllWindows();
+
+
+			//crete the final mask for segmentation
+
+			for (int j = y; j < y + h; j++) {
+				for (int i = x; i < x + w; i++) {
+
+					seg_image.at<uchar>(i,j) = mask.at<uchar>(j - y, i - x);
+				}
+			}
 		}
+		
 
 	}
 	else {
@@ -96,13 +137,13 @@ void close_lines(cv::Mat& edge_image){
 	
 	//give the size for the application of morphological operator  
 
-	int morph_size = 5;
+	int morph_size = 3;
 
 	cv::Mat element = getStructuringElement(cv::MORPH_ELLIPSE
 		, cv::Size(morph_size ,  morph_size));
 	
 	cv::Mat img_out;
-	morphologyEx(edge_image, img_out, cv::MORPH_GRADIENT, element, cv::Point(-1,-1), 2);
+	morphologyEx(edge_image, img_out, cv::MORPH_DILATE, element, cv::Point(-1,-1), 5);
 	
 
 	cv::imshow("algo", img_out);
@@ -195,3 +236,5 @@ void clustering(cv::Mat image_box, cv::Mat& cluster) {
 	cluster = clustered.clone();
 
 }
+
+

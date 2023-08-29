@@ -52,6 +52,9 @@ int main()
 
     for (int num = 0; num < images.size(); num++)
     {
+
+
+        
         std::string boxes = abs_path + std::to_string(i);
         
         //string to take the image
@@ -70,36 +73,39 @@ int main()
         boxes = "C:/Users/miche/OneDrive/Desktop/Sport_scene_dataset/Masks/im"+ std::to_string(i);
         boxes = boxes+ "_bb.txt";
 
-        //Create a copy of the image to work on
+        ////Create a copy of the image to work on
         cv::Mat test = cv::imread(img_path);
 
         cv::Mat  image_box = test.clone();
 
-
-        //eliminate boxes inside the image to have a better field detection 
-        box_elimination(image_box, image_box, boxes);
-
-        //cover the holes left by the remotion of the boxes
-        fill_image(image_box);
-
-        //clusterize the image in order to detect the field and the background  
-        cv::Mat clustered;
-        color_quantization(image_box, clustered);
-
-        //assign specific label for the test task
-        cv::Mat segmented_field = clustered.clone();
-        field_distinction(clustered, segmented_field);
-
-
         //start players segmentation
-        //player_segmentation(test, image_box, boxes);
+        //contains the mask with 1 only when a player is found  
+        cv::Mat seg_image(test.size(), CV_8UC1);
+        player_segmentation(test, seg_image, boxes);
+
+
+
+
+        //
+        ////eliminate boxes inside the image to have a better field detection 
+        //box_elimination(image_box, image_box, boxes);
+
+        ////clusterize the image in order to detect the field and the background  
+        //cv::Mat clustered;
+        //color_quantization(image_box, clustered);
+
+        ////assign specific label for the test task
+        //cv::Mat segmented_field = clustered.clone();
+        //field_distinction(image_box,clustered, segmented_field);
+
+        cv::destroyAllWindows();
 
         //unire cose di player segmentation and field 
 
         //save bin
        // cv::Mat save_bin (segmented_field.rows, segmented_field.cols,CV_8UC1);
        // write_segmentation_results(segmented_field,save_bin,bin);
-
+       
         i++;
     }
 }
