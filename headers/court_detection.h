@@ -2,7 +2,7 @@
 #define COURT_DETECTION_H
 #include "header.h"
 
-void box_elimination(cv::Mat image, cv::Mat img_out, std::string str);
+void player_elimination(cv::Mat image, cv::Mat img_out, cv::Mat& mask);
 
 void fill_image(cv::Mat& image);
 
