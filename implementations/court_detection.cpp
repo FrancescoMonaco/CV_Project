@@ -2,20 +2,22 @@
 #include "../headers/segmentation.h"
 
 
+
 //i don't consider the players which have their own segmentation path
-void player_elimination(cv::Mat image, cv::Mat img_out, cv::Mat& mask)
+void player_elimination(cv::Mat image, cv::Mat& img_out, cv::Mat mask)
 {
 	//clone the original image
 	cv::Mat usage = image.clone();
 
 	for (int i = 0; i < mask.rows; i++) {
 		for (int j = 0; j < mask.cols; j++) {
-			if (mask.at<uchar>(i, j) == 1) {
-				//create a ,ask whithout considering the players, that will be segmented apart
+			if (mask.at<uchar>(i, j) == 255) {
+				//create a mask whithout considering the players, that will be segmented apart
 				usage.at<cv::Vec3b>(i, j) = cv::Vec3b(0, 0, 0);
 			}
 		}
 	}
+	img_out = usage.clone();
 
 }
 

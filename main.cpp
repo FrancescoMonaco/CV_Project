@@ -11,6 +11,11 @@ const std::string rel_path = "D:/Download/Sport_scene_dataset";
 const std::string partial = "/ProcessedBoxes/";
 const std::string complete = "/Predictions/";
 
+
+// COSE DA FARE
+// 1) linee nel watershed
+// 2) 
+
 // ***MAIN***
 int main()
 {
@@ -75,13 +80,73 @@ int main()
          boxes = rel_path + "/Masks/im" + std::to_string(num);
          boxes = boxes + "_bb.txt";
 
-         //Create a copy of the image to work on
-
          cv::Mat  image_box = images[k].clone();
 
 
+         cv::Mat seg_image(image_box.size(), CV_8UC1);
+         player_segmentation(image_box, seg_image, boxes);
+
+         //cv::Mat gray;
+         //cv::cvtColor(image_box, gray, cv::COLOR_BGR2GRAY);
+
+         //// Apply adaptive thresholding to create markers for watershed
+         //cv::Mat markers;
+         //cv::adaptiveThreshold(gray, markers, 255, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY_INV, 11, 2);
+         //cv::imshow("Markers", markers);
+         //// Noise reduction using morphological operations
+         //cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
+         //cv::Mat opening;
+         //cv::morphologyEx(markers, opening, cv::MORPH_OPEN, kernel, cv::Point(-1, -1), 2);
+
+         //// Sure background area
+         //cv::Mat sure_bg;
+         //cv::dilate(opening, sure_bg, kernel, cv::Point(-1, -1), 3);
+         //cv::imshow("Sure Background", sure_bg);
+         //// Finding sure foreground area using distance transform
+         //cv::Mat dist_transform;
+         //cv::distanceTransform(opening, dist_transform, cv::DIST_L2, 5);
+         //cv::normalize(dist_transform, dist_transform, 0, 1, cv::NORM_MINMAX);
+         //cv::Mat sure_fg;
+         //cv::threshold(dist_transform, sure_fg, 0.8, 1, cv::THRESH_BINARY);
+         //cv::imshow("Transform", dist_transform);
+         //// Finding unknown region
+         //cv::Mat sure_fg_8u;
+         //sure_fg.convertTo(sure_fg_8u, CV_8U);
+         //cv::Mat unknown = sure_bg - sure_fg_8u;
+
+         //// Marker labeling
+         //cv::Mat markers_cvt;
+         //sure_fg_8u.convertTo(markers_cvt, CV_32S);
+         //cv::connectedComponents(sure_fg_8u, markers_cvt);
+
+         //// Apply watershed algorithm
+         //cv::watershed(images[k], markers_cvt);
+
+         //// Assign different colors to different segmented regions
+         //cv::Mat segmented_image = cv::Mat::zeros(images[k].size(), CV_8UC3);
+         //for (int row = 0; row < markers_cvt.rows; ++row) {
+         //    for (int col = 0; col < markers_cvt.cols; ++col) {
+         //        int label = markers_cvt.at<int>(row, col);
+         //        if (label == -1) {
+         //            segmented_image.at<cv::Vec3b>(row, col) = cv::Vec3b(0, 0, 255); // Mark as red
+         //        }
+         //        else {
+         //            segmented_image.at<cv::Vec3b>(row, col) = cv::Vec3b(0, 255, 0); // Mark with green for other regions
+         //        }
+         //    }
+         //}
+
+         //// Display the segmented image
+         //cv::imshow("Segmented Image", segmented_image);
+         //cv::waitKey(0);
+
+         //Create a copy of the image to work on
+
+        // cv::Mat  image_box = images[k].clone();
+
+
          //eliminate boxes inside the image to have a better field detection 
-         box_elimination(image_box, image_box, boxes);
+        // box_elimination(image_box, image_box, boxes);
 
          //cover the holes left by the remotion of the boxes
          //fill_image(image_box);
