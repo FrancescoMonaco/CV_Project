@@ -26,10 +26,10 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str){
 
 					img_out.at<cv::Vec3b>(j-y, i-x) = image.at<cv::Vec3b>(j,i);
 				}
-			}
+			}/*
 			cv::imshow("box", img_out);
 			cv::waitKey(0);
-			
+			*/
 			cv::Mat clustered;
 			clustering(img_out,clustered);
 
@@ -72,47 +72,43 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str){
 
 				if (cv::arcLength(contours[i], true) >= minLength) {
 					std::vector<std::vector<cv::Point>> contourSubset(1, contours[i]);
-					cv::drawContours(mask, contourSubset, -1, cv::Scalar(255), cv::LINE_4);
+					cv::drawContours(mask, contourSubset, -1, cv::Scalar(255), cv::LINE_8);
 
 				}
 			}
 
 
 			cv::Mat displayMask;
-			mask.convertTo(displayMask, CV_8U);
+			mask.convertTo(displayMask, CV_8UC1);
 
 			cv::imshow("Mask Image", displayMask);
 			cv::waitKey(0);
 
+			//close the lines found out by using the clustering and after removing the less important 
 			close_lines(displayMask);
 			
+			/*cv::imshow(" ", displayMask);
+			cv::waitKey(0);*/
 
+			//i use this function to color inside the figures
 			fill_segments(displayMask);
-			
-			cv::Mat segmented_image(mask.rows,mask.cols,CV_8UC3);
-
-			for (int i = 0; i < mask.rows; i++) {
-				for (int j = 0; j < mask.cols; j++) {
-					if (displayMask.at<uchar>(i, j) == 255) {
-
-						segmented_image.at<cv::Vec3b>(i, j) = clustered.at<cv::Vec3b>(i,j);
-
-					}
-				}
-			}
-
-			cv::imshow("segmentation", segmented_image);
+	
+			/*cv::imshow(" ", displayMask);
 			cv::waitKey(0);
+			*/
+			//errore
+			//cv::imshow("segmentation", segmented_image);
+			//cv::waitKey(0);
 
 			cv::destroyAllWindows();
 
 
-			//crete the final mask for segmentation
+			//create the final mask for segmentation
 
 			for (int j = y; j < y + h; j++) {
 				for (int i = x; i < x + w; i++) {
 
-					seg_image.at<uchar>(i,j) = mask.at<uchar>(j - y, i - x);
+					seg_image.at<uchar>(j,i) = displayMask.at<uchar>(j - y, i - x);
 				}
 			}
 		}
@@ -137,17 +133,20 @@ void close_lines(cv::Mat& edge_image){
 	
 	//give the size for the application of morphological operator  
 
-	int morph_size = 3;
+	int morph_size = 5;
 
 	cv::Mat element = getStructuringElement(cv::MORPH_ELLIPSE
 		, cv::Size(morph_size ,  morph_size));
 	
 	cv::Mat img_out;
-	morphologyEx(edge_image, img_out, cv::MORPH_DILATE, element, cv::Point(-1,-1), 5);
+	morphologyEx(edge_image, img_out, cv::MORPH_DILATE, element, cv::Point(-1,-1), 3);
+	//thin some edges
+	//cv::Mat img_out1;
+	//morphologyEx(img_out, img_out1, cv::MORPH_ERODE, element, cv::Point(-1,-1), 1);
 	
 
-	cv::imshow("algo", img_out);
-	cv::waitKey(0);
+	/*cv::imshow("algo", img_out1);
+	cv::waitKey(0);*/
 
 
 
@@ -171,11 +170,11 @@ void fill_segments(cv::Mat& edge_image) {
 	for (; idx >= 0; idx = hierarchy[idx][0])
 	{
 		cv::Scalar color(255,255,255);
-		drawContours(dst, contours, idx, color, cv::FILLED, 8, hierarchy);
+		drawContours(edge_image, contours, idx, color, cv::FILLED, 8, hierarchy);
 	}
-	
-	cv::imshow("Components", dst);
-	cv::waitKey(0);
+
+	//cv::imshow("Components", edge_image);
+	//cv::waitKey(0);
 }
 
 void clustering(cv::Mat image_box, cv::Mat& cluster) {
@@ -189,8 +188,10 @@ void clustering(cv::Mat image_box, cv::Mat& cluster) {
 	cv::Mat floatImage, clustered;
 	image_box.convertTo(floatImage, CV_32FC3, 1.0 / 255.0);
 	cv::Mat flat = floatImage.reshape(1, floatImage.rows * floatImage.cols);
+	cv::normalize(flat, flat, 0, 1, cv::NORM_MINMAX);
+
 	//cv::Mat flat = image_box.reshape(1, image_box.cols * image_box.rows);
-	cv::kmeans(flat, numClusters, labels, criteria, 250, cv::KMEANS_PP_CENTERS, centers);
+	cv::kmeans(flat, numClusters, labels, criteria, 150, cv::KMEANS_PP_CENTERS, centers);
 
 	// Define replacement colors
 	cv::Vec3b colors[5];
@@ -198,16 +199,13 @@ void clustering(cv::Mat image_box, cv::Mat& cluster) {
 	colors[0] = cv::Vec3b(255, 0, 0); // Red
 	colors[1] = cv::Vec3b(0, 0, 255); // Blue
 	colors[2] = cv::Vec3b(0, 255, 0); // green 
-	colors[3] = cv::Vec3b(255, 255, 255); // green 
-	colors[4] = cv::Vec3b(0, 0, 0); // green 
+	colors[3] = cv::Vec3b(255, 255, 255);  
+	colors[4] = cv::Vec3b(255, 255, 0);  
 
 	clustered = cv::Mat(image_box.rows, image_box.cols, CV_8UC3);
 
 	
 	for (int i = 0; i < image_box.rows*image_box.cols; i++) {
-
-		
-
 
 			int el = labels.at<int>(0, i);
 			clustered.at<cv::Vec3b>(i/image_box.cols, i% image_box.cols) = colors[el];
@@ -216,23 +214,11 @@ void clustering(cv::Mat image_box, cv::Mat& cluster) {
 	}
 
 
-
-	// Define blob parameters
-	cv::Size size(300, 300);  // Set your desired blob size
-	cv::Scalar mean(104, 117, 123); // Set the mean values
-	bool swapRB = true; // Swap Red and Blue channels
-
-	// Create a blob from the image
-	/*cv::Mat blob = cv::dnn::blobFromImage(clustered, 1.0, size, mean, swapRB, false);
-	cv::Mat blobImage = blob.reshape(1, size.height);
-	// Scale the blob data for visualization
-	cv::Mat blobImageScaled;
-	cv::normalize(blobImage, blobImageScaled, 0, 255, cv::NORM_MINMAX, CV_8U);
-	*/
-	cv::imshow("clustered", clustered);
+	//
+	/*cv::imshow("clustered", clustered);
 
 	cv::waitKey(0);
-	
+	*/
 	cluster = clustered.clone();
 
 }
