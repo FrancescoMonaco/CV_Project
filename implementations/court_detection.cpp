@@ -376,14 +376,18 @@ bool line_refinement(cv::Mat& image, cv::Vec2f& longest_line)
 		if (std::abs(angle_deg - 90) <= 15 || std::abs(angle_deg - 270) <= 15) {
 			// Check if the line is not too close to the image borders
 			if (std::abs(rho) > 70 && std::abs(rho) < std::min(image_seg_gray.rows, image_seg_gray.cols) - 70) {
-				// Check if the line is not close to the top or bottom of the image
 				if (std::abs(rho) > 70 && std::abs(rho) < std::max(image_seg_gray.rows, image_seg_gray.cols) - 70) {
-					float length = std::abs(rho);
-					if (length > longest_line_length) {
-						ret = true;
-						longest_line_length = length;
-						longest_line = line;
-					}
+
+					// Calculate the line's y-coordinate at the bottom of the image
+					double y_bottom = -a / b * image_seg_gray.cols + y0;
+
+					// Check if the line's bottom point is above 35% from the bottom
+					if (y_bottom > 0.65 * image_seg_gray.rows) {
+						float length = std::abs(rho);
+						if (length > longest_line_length) {
+							ret = true;
+							longest_line_length = length;
+							longest_line = line;
 				}
 			}
 		}

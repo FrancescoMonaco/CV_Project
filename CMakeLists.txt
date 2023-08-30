@@ -9,11 +9,11 @@ find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 # Add libraries
-add_library(utility headers/utility.h implementations/utility.cpp))
-add_library(player_detection headers/player_detection.h implementations/player_detection.cpp))
+add_library(utility headers/utility.h implementations/utility.cpp)
+add_library(player_detection headers/player_detection.h implementations/player_detection.cpp)
 add_library(segmentation headers/segmentation.h implementations/segmentation.cpp)
-add_library(write_results headers/write_results.h implementations/write_results.cpp))
-add_library(court_detection headers/court_detection.h implementations/court_detection.cpp))
+add_library(write_results headers/write_results.h implementations/write_results.cpp)
+add_library(court_detection headers/court_detection.h implementations/court_detection.cpp)
 add_library(evaluation headers/Eval.h implementations/Eval.cpp)
 add_library(base headers/header.h)
 
