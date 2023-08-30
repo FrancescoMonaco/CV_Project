@@ -18,4 +18,10 @@ void lines_detector(cv::Mat image);
 //actually not used
 void court_localization(cv::Mat image, cv::Mat& edges);
 
+/// @brief Finds the line that divides the playing field from the background
+/// @param image where to find the line
+/// @param longest_line the line that divides the playing field from the background if found
+/// @return true if the line is found, false otherwise
+bool line_refinement(cv::Mat& image, cv::Vec2f& longest_line);
+
 #endif // !COURT_DETECTION_H
