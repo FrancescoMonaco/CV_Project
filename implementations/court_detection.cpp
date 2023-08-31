@@ -297,8 +297,7 @@ void court_localization(cv::Mat image, cv::Mat& edge) {
 	cv::waitKey(0);
 }
 
-bool line_refinement(cv::Mat& image, cv::Vec2f& longest_line)
-{
+bool line_refinement(cv::Mat& image, cv::Vec2f& longest_line) {
 	// Put the image in grayscale
 	cv::Mat gray;
 	cv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);
@@ -306,7 +305,7 @@ bool line_refinement(cv::Mat& image, cv::Vec2f& longest_line)
 	// Apply adaptive thresholding to create markers for watershed
 	cv::Mat markers;
 	cv::adaptiveThreshold(gray, markers, 255, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY_INV, 11, 8);
-	cv::imshow("Markers", markers);
+
 	// Noise reduction using morphological operations
 	cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
 	cv::Mat opening;
@@ -315,14 +314,14 @@ bool line_refinement(cv::Mat& image, cv::Vec2f& longest_line)
 	// Sure background area
 	cv::Mat sure_bg;
 	cv::dilate(opening, sure_bg, kernel, cv::Point(-1, -1), 3);
-	cv::imshow("Sure Background", sure_bg);
+
 	// Finding sure foreground area using distance transform
 	cv::Mat dist_transform;
 	cv::distanceTransform(opening, dist_transform, cv::DIST_L2, 5);
 	cv::normalize(dist_transform, dist_transform, 0, 1, cv::NORM_MINMAX);
 	cv::Mat sure_fg;
 	cv::threshold(dist_transform, sure_fg, 0.8, 1, cv::THRESH_BINARY);
-	cv::imshow("Transform", dist_transform);
+
 	// Finding unknown region
 	cv::Mat sure_fg_8u;
 	sure_fg.convertTo(sure_fg_8u, CV_8U);
@@ -365,6 +364,9 @@ bool line_refinement(cv::Mat& image, cv::Vec2f& longest_line)
 
 	// Find the longest horizontal line within the specified angle range
 	float longest_line_length = 0;
+	int middle_row = image_seg_gray.rows / 2;
+
+	// Find the longest horizontal line within the specified angle range
 	bool ret = false;
 	for (const auto& line : lines) {
 		float rho = line[0];
@@ -373,26 +375,29 @@ bool line_refinement(cv::Mat& image, cv::Vec2f& longest_line)
 		// Convert theta to degrees
 		float angle_deg = theta * 180.0f / CV_PI;
 
-		if (std::abs(angle_deg - 90) <= 15 || std::abs(angle_deg - 270) <= 15) {
-			// Check if the line is not too close to the image borders
-			if (std::abs(rho) > 70 && std::abs(rho) < std::min(image_seg_gray.rows, image_seg_gray.cols) - 70) {
-				if (std::abs(rho) > 70 && std::abs(rho) < std::max(image_seg_gray.rows, image_seg_gray.cols) - 70) {
+		// Check if the angle is horizontal with a small tolerance
+		if (std::abs(angle_deg - 90) <= 13 || std::abs(angle_deg - 270) <= 13) {
+			// Calculate the line's y-coordinate at the bottom of the image
+			double a = std::cos(theta);
+			double b = std::sin(theta);
+			double x0 = a * rho;
+			double y0 = b * rho;
 
-					// Calculate the line's y-coordinate at the bottom of the image
-					double y_bottom = -a / b * image_seg_gray.cols + y0;
-
-					// Check if the line's bottom point is above 35% from the bottom
-					if (y_bottom > 0.65 * image_seg_gray.rows) {
-						float length = std::abs(rho);
-						if (length > longest_line_length) {
-							ret = true;
-							longest_line_length = length;
-							longest_line = line;
-				}
+			std::cout << std::abs(y0 - middle_row) << std::endl;
+			std::cout << 0.2 * image_seg_gray.rows << std::endl;
+				// Check if the line's y-coordinate is near the middle row
+				if (std::abs(y0 - middle_row) < 0.15 * image_seg_gray.rows) {
+					float length = std::abs(rho);
+					if (length > longest_line_length) {
+						ret = true;
+						longest_line_length = length;
+						longest_line = line;
+					}
+				
 			}
 		}
 	}
-
+	
 	// Compute the endpoints
 	double a = std::cos(longest_line[1]);
 	double b = std::sin(longest_line[1]);
@@ -402,16 +407,26 @@ bool line_refinement(cv::Mat& image, cv::Vec2f& longest_line)
 	cv::Point pt2(cvRound(x0 - 1000 * (-b)), cvRound(y0 - 1000 * (a)));
 
 
-	//***JUST FOR DEGUB REMOVE AFTER***
-	// Draw the longest horizontal line on the image
-	cv::Mat image_with_line;
-	cv::cvtColor(edges, image_with_line, cv::COLOR_GRAY2BGR);
-	cv::line(image_with_line, pt1, pt2, cv::Scalar(0, 0, 255), 3);
-
-	// Display the image with the longest horizontal line
-	cv::imshow("Longest Horizontal Line", image_with_line);
-	cv::waitKey(0);
-
 	// Set the condition of usage
 	return ret;
+}
+
+void court_segmentation_refinement(cv::Mat& segmentation, cv::Vec2f& line) { 
+	//segmentation is a 3 channel image, where green indicates court and black background
+	//above the line we can only have background, below the line we can have both background and court
+
+	// Take the info from the line
+	float angle_deg = line[1] * 180.0f / CV_PI;
+	float slope = -1 / std::tan(line[1]);
+
+	// Correct the segmentation
+	for (int y = 0; y < segmentation.rows; ++y) {
+		for (int x = 0; x < segmentation.cols; ++x) {
+			// Check if the pixel is above the line
+			if (y < slope * x + line[0]) {
+				// Above the line, set the pixel to background (black)
+				segmentation.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
+			}
+		}
+	}
 }

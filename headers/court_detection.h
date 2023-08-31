@@ -24,4 +24,10 @@ void court_localization(cv::Mat image, cv::Mat& edges);
 /// @return true if the line is found, false otherwise
 bool line_refinement(cv::Mat& image, cv::Vec2f& longest_line);
 
+
+/// @brief Adjusts the segmentation mask according to the line found
+/// @param segmentation mask to be adjusted
+/// @param line to use to adjust the mask
+void court_segmentation_refinement(cv::Mat& segmentation, cv::Vec2f& line);
+
 #endif // !COURT_DETECTION_H
