@@ -304,7 +304,7 @@ bool line_refinement(cv::Mat& image, cv::Vec2f& longest_line) {
 
 	// Apply adaptive thresholding to create markers for watershed
 	cv::Mat markers;
-	cv::adaptiveThreshold(gray, markers, 255, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY_INV, 11, 8);
+	cv::adaptiveThreshold(gray, markers, 255, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY_INV, 11, 7);
 
 	// Noise reduction using morphological operations
 	cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
@@ -320,7 +320,7 @@ bool line_refinement(cv::Mat& image, cv::Vec2f& longest_line) {
 	cv::distanceTransform(opening, dist_transform, cv::DIST_L2, 5);
 	cv::normalize(dist_transform, dist_transform, 0, 1, cv::NORM_MINMAX);
 	cv::Mat sure_fg;
-	cv::threshold(dist_transform, sure_fg, 0.8, 1, cv::THRESH_BINARY);
+	cv::threshold(dist_transform, sure_fg, 0.79, 1, cv::THRESH_BINARY);
 
 	// Finding unknown region
 	cv::Mat sure_fg_8u;
@@ -375,8 +375,8 @@ bool line_refinement(cv::Mat& image, cv::Vec2f& longest_line) {
 		// Convert theta to degrees
 		float angle_deg = theta * 180.0f / CV_PI;
 
-		// Check if the angle is horizontal with a small tolerance
-		if (std::abs(angle_deg - 90) <= 13 || std::abs(angle_deg - 270) <= 13) {
+		// Check if the line is almost horizontal
+		if (std::abs(angle_deg - 90) <= 15 || std::abs(angle_deg - 270) <= 15) {
 			// Calculate the line's y-coordinate at the bottom of the image
 			double a = std::cos(theta);
 			double b = std::sin(theta);
@@ -407,6 +407,17 @@ bool line_refinement(cv::Mat& image, cv::Vec2f& longest_line) {
 	cv::Point pt2(cvRound(x0 - 1000 * (-b)), cvRound(y0 - 1000 * (a)));
 
 
+
+	//***JUST FOR DEGUB REMOVE AFTER***
+	// Draw the longest horizontal line on the image
+	cv::Mat image_with_line;
+	cv::cvtColor(edges, image_with_line, cv::COLOR_GRAY2BGR);
+	cv::line(image_with_line, pt1, pt2, cv::Scalar(0, 0, 255), 3);
+
+	// Display the image with the longest horizontal line
+	cv::imshow("Longest Horizontal Line", image_with_line);
+	cv::waitKey(0);
+
 	// Set the condition of usage
 	return ret;
 }
@@ -418,6 +429,69 @@ void court_segmentation_refinement(cv::Mat& segmentation, cv::Vec2f& line) {
 	// Take the info from the line
 	float angle_deg = line[1] * 180.0f / CV_PI;
 	float slope = -1 / std::tan(line[1]);
+
+	//Count the number of pixels green and black pixels above and below the line
+	int green_above = 0, green_below=0, black_above = 0, black_below = 0;
+
+	for (int y = 0; y < segmentation.rows; ++y) {
+		for (int x = 0; x < segmentation.cols; ++x) {
+			// Check if the pixel is above the line
+			if (y < slope * x + line[0]) {
+				// Above the line, check if the pixel is green or black
+				if (segmentation.at<cv::Vec3b>(y, x) == cv::Vec3b(0, 255, 0)) {
+					// Green pixel above the line
+					green_above++;
+				}
+				else {
+					// Black pixel above the line
+					black_above++;
+				}
+			}
+			else {
+				// Below the line, check if the pixel is green or black
+				if (segmentation.at<cv::Vec3b>(y, x) == cv::Vec3b(0, 255, 0)) {
+					// Green pixel below the line
+					green_below++;
+				}
+				else {
+					// Black pixel below the line
+					black_below++;
+				}
+			}
+		}
+	}
+
+	if (black_above > green_above) {
+		//Correct above
+		for (int y = 0; y < segmentation.rows; ++y) {
+			for (int x = 0; x < segmentation.cols; ++x) {
+				// Check if the pixel is above the line
+				if (y < slope * x + line[0]) {
+					// Above the line, set the pixel to background (black)
+					segmentation.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
+				}
+			}
+		}
+	}
+	else if (black_below > green_below) {
+		//Heavy correction
+		for (int y = 0; y < segmentation.rows; ++y) {
+			for (int x = 0; x < segmentation.cols; ++x) {
+				// Check if the pixel is above the line
+				if (y < slope * x + line[0]) {
+					// Above the line, set the pixel to background (black)
+					segmentation.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
+				}
+				else
+				{
+					// Below the line, set the pixel to court (green)
+					segmentation.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 255, 0);
+				}
+			}
+		}
+	}
+
+
 
 	// Correct the segmentation
 	for (int y = 0; y < segmentation.rows; ++y) {
