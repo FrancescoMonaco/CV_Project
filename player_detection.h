@@ -7,4 +7,7 @@ void close_lines(cv::Mat& edge_image);
 
 void fill_segments(cv::Mat& edge_image);
 
-void clustering(cv::Mat image_box, cv::Mat& clustered);
+void clustering(cv::Mat image_box ,cv::Mat& clustered);
+
+void create_mask(cv::Mat image, cv::Mat& mask, std::string str);
+
