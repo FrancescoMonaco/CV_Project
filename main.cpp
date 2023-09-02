@@ -84,7 +84,9 @@ int main()
 
 
          cv::Mat seg_image(image_box.size(), CV_8UC1);
-         //player_segmentation(image_box, seg_image, boxes);
+         player_segmentation(image_box, seg_image, boxes);
+
+         cv::imshow("Image", seg_image);
 
          cv::Mat mask, clustered;
          //player_elimination(image_box, seg_image, mask);
@@ -96,9 +98,10 @@ int main()
          //image_box.copyTo(final_image, mask);
          //cv::imshow("Final image", mask);
          //cv::waitKey(0);
+
          cv::Vec2f line;
-         bool val = line_refinement(image_box, line);
-         std::cout << "Line: " << val << std::endl;
+         //bool val = line_refinement(image_box, line);
+         //std::cout << "Line: " << val << std::endl;
 
          //Create a copy of the image to work on
 
@@ -106,8 +109,8 @@ int main()
 
 
          //eliminate boxes inside the image to have a better field detection 
-        // box_elimination(image_box, image_box, boxes);
-
+          player_elimination(image_box, mask, seg_image);
+          cv::imshow("mask", mask);
          //cover the holes left by the remotion of the boxes
          //fill_image(image_box);
 
@@ -139,7 +142,7 @@ int main()
 		 //}
 
 
-         cv::imshow("Image", images[k]);
+         //cv::imshow("Image", images[k]);
 		 cv::waitKey(0);
     }
 

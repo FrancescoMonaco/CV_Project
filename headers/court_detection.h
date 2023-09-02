@@ -4,19 +4,22 @@
 
 void player_elimination(cv::Mat image, cv::Mat& img_out, cv::Mat mask);
 
-void fill_image(cv::Mat& image);
-
-void color_quantization(cv::Mat image, cv::Mat& clustered);
+std::vector<double> color_quantization(cv::Mat image, cv::Mat& clustered, cv::Mat& centroid);
 
 void field_distinction(cv::Mat image_box, cv::Mat clustered, cv::Mat& segmented_field);
 
 void merge_clusters(cv::Mat& labels, cv::Mat& centers, float merge_threshold);
+
+std::vector<double> maximum_distance(cv::Mat image, cv::Mat clustered_image, cv::Mat centers);
 
 //actually not used 
 void lines_detector(cv::Mat image);
 
 //actually not used
 void court_localization(cv::Mat image, cv::Mat& edges);
+
+//actually not used 
+void fill_image(cv::Mat& image);
 
 /// @brief Finds the line that divides the playing field from the background
 /// @param image where to find the line

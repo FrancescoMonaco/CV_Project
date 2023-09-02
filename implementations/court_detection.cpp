@@ -1,8 +1,6 @@
 #include"../headers/court_detection.h"
 #include "../headers/segmentation.h"
 
-
-
 //i don't consider the players which have their own segmentation path
 void player_elimination(cv::Mat image, cv::Mat& img_out, cv::Mat mask)
 {
@@ -67,14 +65,85 @@ void merge_clusters(cv::Mat& labels, cv::Mat& centers, float merge_threshold) {
 	}
 }
 
+std::vector<double> maximum_distance(cv::Mat image, cv::Mat clustered_image, cv::Mat centers) {
 
-void color_quantization(cv::Mat image, cv::Mat& img_out) {
+
+	std::vector<double> maximum{ 0.0,0.0,0.0 };
+
+	//find the maximum distance inside the cluster
+
+	for (int i = 0; i < clustered_image.rows; i++) {
+		for (int j = 0; j < clustered_image.cols; j++) {
+
+			double sum = 0.0;
+
+			//cluster 1
+			cv::Vec3b pixel = image.at<cv::Vec3b>(i, j);
+			if (clustered_image.at<cv::Vec3b>(i, j) == cv::Vec3b(255, 0, 0)) {
+
+				for (int z = 0; z < 3; z++) {
+					cv::Vec3b pixel2 = centers.at<cv::Vec3b>(0);
+					double diff = pixel[z] - pixel2[z];
+					sum += diff * diff;
+				}
+				sum = sqrt(sum);
+
+				if (maximum[0] < sum) {
+					maximum[0] = sum;
+
+				}
+			}
+			//cluster 2 
+			else if (clustered_image.at<cv::Vec3b>(i, j) == cv::Vec3b(0, 255, 0)) {
+
+
+				for (int z = 0; z < 3; z++) {
+					cv::Vec3b pixel2 = centers.at<cv::Vec3b>(1);
+					double diff = pixel[z] - pixel2[z];
+					sum += diff * diff;
+				}
+				sum = sqrt(sum);
+
+				if (maximum[1] < sum) {
+					maximum[1] = sum;
+
+				}
+
+				//cluster 3
+			}
+			else if (clustered_image.at<cv::Vec3b>(i, j) == cv::Vec3b(0, 0, 255)) {
+
+
+				for (int z = 0; z < 3; z++) {
+					cv::Vec3b pixel2 = centers.at<cv::Vec3b>(2);
+					double diff = pixel[z] - pixel2[z];
+					sum += diff * diff;
+				}
+
+				sum = sqrt(sum);
+
+				if (maximum[2] < sum) {
+					maximum[2] = sum;
+
+				}
+
+			}
+			//don't consider all the black pixels
+			else {
+				continue;
+			}
+		}
+	}
+	return maximum;
+}
+
+std::vector<double> color_quantization(cv::Mat image, cv::Mat& img_out, cv::Mat& centers) {
 
 
 
 
 	int numClusters = 3; // Number of desired colors after quantization
-	cv::Mat labels, centers;
+	cv::Mat labels;
 	cv::TermCriteria criteria = cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 10, 0.1);
 
 	std::vector<cv::Vec3b> vec;
@@ -108,8 +177,8 @@ void color_quantization(cv::Mat image, cv::Mat& img_out) {
 		flattened_data.at<float>(i, 0) = vec[i][0];
 		flattened_data.at<float>(i, 1) = vec[i][1];
 		flattened_data.at<float>(i, 2) = vec[i][2];
-		flattened_data.at<float>(i, 4) = pixel_positions[i].x;         // X
-		flattened_data.at<float>(i, 5) = pixel_positions[i].y;         // Y
+		//flattened_data.at<float>(i, 4) = pixel_positions[i].x;         // X
+		//flattened_data.at<float>(i, 5) = pixel_positions[i].y;         // Y
 	}
 
 	cv::normalize(flattened_data, flattened_data, 0, 1, cv::NORM_MINMAX);
@@ -121,16 +190,8 @@ void color_quantization(cv::Mat image, cv::Mat& img_out) {
 	cv::kmeans(flattened_data, numClusters, labels, criteria, 100, cv::KMEANS_PP_CENTERS, centers);
 
 
-
-
-
-
-
 	float merge_threshold = 0.35;
 	merge_clusters(labels, centers, merge_threshold);
-
-
-
 
 	// Define replacement colors
 	cv::Vec3b colors[3];
@@ -149,7 +210,7 @@ void color_quantization(cv::Mat image, cv::Mat& img_out) {
 
 			if (mask.at<uchar>(i, j) == 1) {
 
-				int el = labels.at<int>(0, z);
+				int el = labels.at<int>(z);
 				clustered.at<cv::Vec3b>(i, j) = colors[el];
 				z++;
 			}
@@ -161,22 +222,15 @@ void color_quantization(cv::Mat image, cv::Mat& img_out) {
 
 	}
 
-
-
-
-	//lines_detector(clustered);
-
-	//cv::Mat converted;
-	//clustered.convertTo(converted, CV_8U);
-	//clustered.convertTo(clustered, CV_8U);
-	//cv::imshow("Original Image", image);
 	cv::imshow("Quantized Image", clustered);
 	cv::waitKey(0);
 	img_out = clustered.clone();
 
-	//lines_detector(img_out);
+	std::vector<double> distances;
+	distances = maximum_distance(image, clustered, centers);
 
 
+	return distances;
 }
 
 
@@ -296,6 +350,9 @@ void court_localization(cv::Mat image, cv::Mat& edge) {
 	cv::imshow("edges", edge);
 	cv::waitKey(0);
 }
+
+
+
 
 bool line_refinement(cv::Mat& image, cv::Vec2f& longest_line) {
 	// Put the image in grayscale
