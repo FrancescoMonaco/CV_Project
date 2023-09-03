@@ -36,14 +36,7 @@ int main()
 
     // BEGIN OF THE PROCESSING PIPELINE
     int savenum= 0;
-    for (auto& test : images)
-    {
-        //Create a copy of the image to work on
-        cv::Mat test_copy = test.clone();
 
-
-
-    }
     std::vector<BoundingBox> processedData = loadBoundingBoxData(rel_path + "/Masks", true);
     //Reorganize the vector into a vector of vectors of BoundingBoxes
     std::vector<std::vector<cv::Rect>> processedData2 = reshapeBB(processedData);
@@ -84,33 +77,36 @@ int main()
 
 
          cv::Mat seg_image(image_box.size(), CV_8UC1);
-         player_segmentation(image_box, seg_image, boxes);
+        // player_segmentation(image_box, seg_image, boxes);
 
-         cv::imshow("Image", seg_image);
+        // cv::imshow("Image", seg_image);
 
-         cv::Mat mask, clustered;
-         //player_elimination(image_box, seg_image, mask);
-
-         //clustering(seg_image, clustered);
-
-         //put image_box in and with the mask and show it
-         //cv::Mat final_image;
-         //image_box.copyTo(final_image, mask);
-         //cv::imshow("Final image", mask);
-         //cv::waitKey(0);
-
-         cv::Vec2f line;
-         //bool val = line_refinement(image_box, line);
-         //std::cout << "Line: " << val << std::endl;
-
-         //Create a copy of the image to work on
-
-        // cv::Mat  image_box = images[k].clone();
+        // cv::Mat mask, clustered, centroid;
 
 
-         //eliminate boxes inside the image to have a better field detection 
-          player_elimination(image_box, mask, seg_image);
-          cv::imshow("mask", mask);
+        // //std::cout << "Line: " << val << std::endl;
+
+        // //Create a copy of the image to work on
+
+        //// cv::Mat  image_box = images[k].clone();
+
+
+        // //eliminate boxes inside the image to have a better field detection 
+        //  player_elimination(image_box, mask, seg_image);
+        //  color_quantization(image_box, clustered, centroid);
+        //  cv::Mat segmentation = clustered.clone();
+        //  field_distinction(image_box, clustered, segmentation);
+
+
+
+        //  cv::Vec2f line;
+        //  bool val = line_refinement(image_box, line);
+        //  if (val) {
+        //      court_segmentation_refinement(segmentation, line);
+        //  }
+        //  cv::imshow("Final", segmentation);
+        //  cv::waitKey(0);
+
          //cover the holes left by the remotion of the boxes
          //fill_image(image_box);
 
@@ -119,7 +115,7 @@ int main()
         // color_quantization(image_box, clustered);
 
          //assign specific label for the test task
-         cv::Mat segmented_field = clustered.clone();
+         //cv::Mat segmented_field = clustered.clone();
          //field_distinction(clustered, clustered, segmented_field);
 
 
@@ -135,14 +131,14 @@ int main()
 
    //      std::vector<int> labels = classify(images[k], processedData2[num-1]);
 
-   //      //for each box draw it on the image using different color for the labels
+   ////      //for each box draw it on the image using different color for the labels
    //      for (size_t i = 0; i < processedData2[num-1].size(); i++) {
 			// cv::rectangle(images[k], processedData2[num-1][i], cv::Scalar(0, 255, 0), 2);
 			// cv::putText(images[k], std::to_string(labels[i]), cv::Point(processedData2[num-1][i].x, processedData2[num-1][i].y), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
 		 //}
 
 
-         //cv::imshow("Image", images[k]);
+   //      cv::imshow("Image", images[k]);
 		 cv::waitKey(0);
     }
 
