@@ -176,8 +176,8 @@ void fill_segments(cv::Mat& edge_image) {
 		drawContours(edge_image, contours, idx, color, cv::FILLED, 8, hierarchy);
 	}
 
-	cv::imshow("Components", edge_image);
-	cv::waitKey(0);
+	//cv::imshow("Components", edge_image);
+	//cv::waitKey(0);
 }
 
 
@@ -273,8 +273,8 @@ void clustering(cv::Mat image_box, cv::Mat& cluster) {
 	cluster = clustered.clone();
 
 
-	cv::imshow("clustering", cluster);
-	cv::waitKey(0);
+	//cv::imshow("clustering", cluster);
+	//cv::waitKey(0);
 
 
 

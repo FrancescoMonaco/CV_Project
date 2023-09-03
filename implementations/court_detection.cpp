@@ -85,8 +85,6 @@ void color_quantization(cv::Mat image, cv::Mat& img_out, cv::Mat& centers) {
 		flattened_data.at<float>(i, 0) = vec[i][0];
 		flattened_data.at<float>(i, 1) = vec[i][1];
 		flattened_data.at<float>(i, 2) = vec[i][2];
-		//flattened_data.at<float>(i, 4) = pixel_positions[i].x;         // X
-		//flattened_data.at<float>(i, 5) = pixel_positions[i].y;         // Y
 	}
 
 	cv::normalize(flattened_data, flattened_data, 0, 1, cv::NORM_MINMAX);
@@ -95,7 +93,7 @@ void color_quantization(cv::Mat image, cv::Mat& img_out, cv::Mat& centers) {
 	image.convertTo(floatImage, CV_32FC3, 1.0 / 255.0);
 	cv::Mat flat = floatImage.reshape(1, floatImage.rows * floatImage.cols);
 
-	cv::kmeans(flattened_data, numClusters, labels, criteria, 30, cv::KMEANS_PP_CENTERS, centers);
+	cv::kmeans(flattened_data, numClusters, labels, criteria, 10, cv::KMEANS_PP_CENTERS, centers);
 
 
 	float merge_threshold = 0.35;
@@ -130,8 +128,6 @@ void color_quantization(cv::Mat image, cv::Mat& img_out, cv::Mat& centers) {
 
 	}
 
-	cv::imshow("Quantized Image", clustered);
-	cv::waitKey(0);
 	img_out = clustered.clone();
 
 	//std::vector<double> distances;
@@ -187,8 +183,6 @@ void field_distinction(cv::Mat image_box, cv::Mat clustered, cv::Mat& segmented_
 		segmented_field.setTo(cv::Vec3b(0, 0, 0), mask2);
 		segmented_field.setTo(cv::Vec3b(0, 0, 0), mask1);
 	}
-	cv::imshow("segmented field", segmented_field);
-	cv::waitKey(0);
 }
 
 
@@ -245,9 +239,6 @@ bool line_refinement(cv::Mat& image, cv::Vec2f& longest_line) {
 		}
 	}
 
-	// Display the segmented image
-	//cv::imshow("Segmented Image", segmented_image);
-	//cv::waitKey(0);
 	cv::Mat image_seg_gray;
 	cv::cvtColor(segmented_image, image_seg_gray, cv::COLOR_BGR2GRAY);
 	// Apply edge detection (e.g., Canny)
@@ -279,8 +270,7 @@ bool line_refinement(cv::Mat& image, cv::Vec2f& longest_line) {
 			double x0 = a * rho;
 			double y0 = b * rho;
 
-			std::cout << std::abs(y0 - middle_row) << std::endl;
-			std::cout << 0.2 * image_seg_gray.rows << std::endl;
+
 				// Check if the line's y-coordinate is near the middle row
 				if (std::abs(y0 - middle_row) < 0.15 * image_seg_gray.rows) {
 					float length = std::abs(rho);
@@ -302,17 +292,6 @@ bool line_refinement(cv::Mat& image, cv::Vec2f& longest_line) {
 	cv::Point pt1(cvRound(x0 + 1000 * (-b)), cvRound(y0 + 1000 * (a)));
 	cv::Point pt2(cvRound(x0 - 1000 * (-b)), cvRound(y0 - 1000 * (a)));
 
-
-
-	//***JUST FOR DEGUB REMOVE AFTER***
-	// Draw the longest horizontal line on the image
-	cv::Mat image_with_line;
-	cv::cvtColor(edges, image_with_line, cv::COLOR_GRAY2BGR);
-	cv::line(image_with_line, pt1, pt2, cv::Scalar(0, 0, 255), 3);
-
-	// Display the image with the longest horizontal line
-	cv::imshow("Longest Horizontal Line", image_with_line);
-	cv::waitKey(0);
 
 	// Set the condition of usage
 	return ret;
@@ -369,6 +348,7 @@ void court_segmentation_refinement(cv::Mat& segmentation, cv::Vec2f& line) {
 			}
 		}
 	}
+
 	else if (black_below > green_below) {
 		//Heavy correction
 		for (int y = 0; y < segmentation.rows; ++y) {
@@ -387,16 +367,4 @@ void court_segmentation_refinement(cv::Mat& segmentation, cv::Vec2f& line) {
 		}
 	}
 
-
-
-	// Correct the segmentation
-	for (int y = 0; y < segmentation.rows; ++y) {
-		for (int x = 0; x < segmentation.cols; ++x) {
-			// Check if the pixel is above the line
-			if (y < slope * x + line[0]) {
-				// Above the line, set the pixel to background (black)
-				segmentation.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
-			}
-		}
-	}
 }

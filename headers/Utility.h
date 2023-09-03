@@ -56,7 +56,24 @@ std::vector<int> classify(cv::Mat& image, std::vector<cv::Rect> rects);
 /// @param rel_path the relative path of the file
 void writeBB(cv::Mat& image, std::vector<cv::Rect> rects, std::vector<int> labels, std::string rel_path);
 
+//***Segmentation Functions***
 
+/// @brief Unites the playing field segmentation with the segmentation of the players
+/// @param segmentation playing field segmentation
+/// @param players mask with the player segmentation
+/// @param rects rects of the players
+/// @param labels labels of the players
+void unifySegmentation(cv::Mat& segmentation, cv::Mat& players, std::vector<cv::Rect> rects, std::vector<int> labels);
+
+/// @brief Transforms the segmentation matrix into a gray scale image
+/// @param segmentation original segmentation matrix
+/// @param gray_seg segmentation matrix converted to gray scale
+void createSegmentationPNG(cv::Mat segmentation, cv::Mat& gray_seg);
+
+/// @brief Writes the segmentation matrix on a file
+/// @param image segmentation matrix
+/// @param rel_path path of the file
+void writeSEG(cv::Mat& image, std::string rel_path);
 
 
 #endif // !UTILITY_H

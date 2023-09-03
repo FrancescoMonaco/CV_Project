@@ -12,9 +12,6 @@ const std::string partial = "/ProcessedBoxes/";
 const std::string complete = "/Predictions/";
 
 
-// COSE DA FARE
-// 1) linee nel watershed
-// 2) 
 
 // ***MAIN***
 int main()
@@ -33,14 +30,13 @@ int main()
         if (im.empty()) continue; //only proceed if successful
         images.push_back(im);
     }
-
+    std::cout << "Starting working on the images" << std::endl;
     // BEGIN OF THE PROCESSING PIPELINE
-    int savenum= 0;
 
     std::vector<BoundingBox> processedData = loadBoundingBoxData(rel_path + "/Masks", true);
     //Reorganize the vector into a vector of vectors of BoundingBoxes
     std::vector<std::vector<cv::Rect>> processedData2 = reshapeBB(processedData);
-
+    /*
     // for each image, keep also the relative fn during the loop
     for (size_t k = 0; k < images.size(); k++) {
         //pick the fn of the image
@@ -69,44 +65,52 @@ int main()
          //bounding boxes for player detection
          boxes = boxes + "_bb.txt";
 
-         //test settings
+         //Strings to save the files
          boxes = rel_path + "/Masks/im" + std::to_string(num);
          boxes = boxes + "_bb.txt";
+         std::string seg_bin_file = rel_path + complete + "im" + std::to_string(num) + "_bin.png";
+         std::string seg_color_file = rel_path + complete + "im" + std::to_string(num) + "_color.png";
 
          cv::Mat  image_box = images[k].clone();
 
 
          cv::Mat seg_image(image_box.size(), CV_8UC1);
-        // player_segmentation(image_box, seg_image, boxes);
+         player_segmentation(image_box, seg_image, boxes);
 
-        // cv::imshow("Image", seg_image);
+         //cv::imshow("Image", seg_image);
 
-        // cv::Mat mask, clustered, centroid;
-
-
-        // //std::cout << "Line: " << val << std::endl;
-
-        // //Create a copy of the image to work on
-
-        //// cv::Mat  image_box = images[k].clone();
-
-
-        // //eliminate boxes inside the image to have a better field detection 
-        //  player_elimination(image_box, mask, seg_image);
-        //  color_quantization(image_box, clustered, centroid);
-        //  cv::Mat segmentation = clustered.clone();
-        //  field_distinction(image_box, clustered, segmentation);
+         cv::Mat mask, clustered, centroid;
 
 
 
-        //  cv::Vec2f line;
-        //  bool val = line_refinement(image_box, line);
-        //  if (val) {
-        //      court_segmentation_refinement(segmentation, line);
-        //  }
-        //  cv::imshow("Final", segmentation);
-        //  cv::waitKey(0);
+         //eliminate boxes inside the image to have a better field detection 
+          player_elimination(image_box, mask, seg_image);
+          color_quantization(image_box, clustered, centroid);
+          cv::Mat segmentation = clustered.clone();
+          field_distinction(image_box, clustered, segmentation);
 
+
+
+          cv::Vec2f line;
+          bool val = line_refinement(image_box, line);
+          if (val) {
+              court_segmentation_refinement(segmentation, line);
+          }
+
+          std::vector<int> labels = classify(images[k], processedData2[num - 1]);
+
+          unifySegmentation(segmentation, seg_image, processedData2[num - 1], labels);
+
+          cv::Mat segmentation_bin = cv::Mat::zeros(segmentation.rows, segmentation.cols, CV_8UC1);
+          createSegmentationPNG(segmentation, segmentation_bin);
+          
+          writeSEG(segmentation_bin, seg_bin_file);
+          writeSEG(segmentation, seg_color_file);
+
+          //cv::imshow("Final", segmentation);
+          //cv::imshow("Final_bin", segmentation_bin);
+          //cv::waitKey(0);
+          std::cout << "*";
          //cover the holes left by the remotion of the boxes
          //fill_image(image_box);
 
@@ -139,22 +143,26 @@ int main()
 
 
    //      cv::imshow("Image", images[k]);
-		 cv::waitKey(0);
+		 //cv::waitKey(0);
     }
+    */
 
 
-    /*
+    
     //Evaluation Part
     //std::vector<BoundingBox> resultData = loadBoundingBoxData("D:/Download/Sport_scene_dataset/Masks");
     //std::vector<BoundingBox> predData = loadBoundingBoxData("D:/Download/Sport_scene_dataset/Masks");
-    float result = processBoxPreds(resultData, resultData);
-    std::cout << "mAP: " << result << std::endl;
+    //float result = processBoxPreds(resultData, resultData);
+    //std::cout << "mAP: " << result << std::endl;
 
-    std::vector<cv::Mat> resultData2 = loadSemanticSegmentationData("D:/Download/Sport_scene_dataset/Masks");
-    float result2 = processSemanticSegmentation(resultData2, resultData2);
-    std::cout << "IoU: " << result2 << std::endl;
+    std::vector<cv::Mat> segmentationGOLD = loadSemanticSegmentationData("D:/Download/Sport_scene_dataset/Masks");
+    std::vector<cv::Mat> segmentationGOLD_REV = loadSemanticSegmentationData("D:/Download/Sport_scene_dataset/Masks", true);
+    std::vector<cv::Mat> segmentationPRED = loadSemanticSegmentationData("D:/Download/Sport_scene_dataset/Predictions");
+    float result_seg = processSemanticSegmentation(segmentationGOLD, segmentationPRED);
+    float result_seg_rev = processSemanticSegmentation(segmentationGOLD_REV, segmentationPRED);
+    std::cout << "IoU: " << std::max(result_seg, result_seg_rev) << std::endl;
 
     //Show results, uncomment to show
-    showResults("D:/Download/Sport_scene_dataset/Images", "D:/Download/Sport_scene_dataset/Masks");
-    */
+    //showResults("D:/Download/Sport_scene_dataset/Images", "D:/Download/Sport_scene_dataset/Masks");
+    
 }
