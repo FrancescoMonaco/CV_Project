@@ -13,8 +13,8 @@ const std::string mask_path = "/Masks";
 
 
 ////// COSE DA FARE
-// 1) scrivere dell'augmentation nel paper
-// 2) Eval print delle metriche foto singola
+// 
+// 
 // 
 
 // ***MAIN***
@@ -50,8 +50,9 @@ int main(int argc, char** argv)
     //Reorganize the vector into a vector of vectors of BoundingBoxes
     std::vector<std::vector<cv::Rect>> processedData2 = reshapeBB(processedData);
 
-    /*
+    
     // for each image, keep also the relative fn during the loop
+    
     for (size_t k = 0; k < images.size(); k++) {
         //pick the fn of the image
          cv::String fn2 = fn[k];
@@ -60,10 +61,6 @@ int main(int argc, char** argv)
          std::cout << "Boxes before cleaning: " << processedData2[num-1].size() << std::endl;
          //cleanRectangles(processedData2[k], images[k]);
          //std::cout << "Boxes after cleaning: " << processedData2[k].size() << std::endl;
-         //show the image with the boxes
-   //      for (auto& r : processedData2[k]) {
-			// cv::rectangle(images[k], r, cv::Scalar(0, 255, 0), 2);
-		 //}
 
          std::string boxes = rel_path + "Images/im" + std::to_string(num);
 
@@ -125,29 +122,6 @@ int main(int argc, char** argv)
           //cv::imshow("Final_bin", segmentation_bin);
           //cv::waitKey(0);
           std::cout << "*";
-         //cover the holes left by the remotion of the boxes
-         //fill_image(image_box);
-
-         //clusterize the image in order to detect the field and the background  
-         //cv::Mat clustered;
-        // color_quantization(image_box, clustered);
-
-         //assign specific label for the test task
-         //cv::Mat segmented_field = clustered.clone();
-         //field_distinction(clustered, clustered, segmented_field);
-
-
-         //start players segmentation
-         //player_segmentation(images[k], image_box, boxes);
-
-         //unire cose di player segmentation and field 
-
-         //save bin
-        // cv::Mat save_bin (segmented_field.rows, segmented_field.cols,CV_8UC1);
-        // write_segmentation_results(segmented_field,save_bin,bin);
-
-
-   //      std::vector<int> labels = classify(images[k], processedData2[num-1]);
 
    ////      //for each box draw it on the image using different color for the labels
    //      for (size_t i = 0; i < processedData2[num-1].size(); i++) {
@@ -159,20 +133,20 @@ int main(int argc, char** argv)
    //      cv::imshow("Image", images[k]);
 		 //cv::waitKey(0);
     }
-    */
+   
 
 
     
     // EVALUATION PIPELINE
-    std::cout << "------\nEvaluation Pipeline" << std::endl;
-    std::vector<BoundingBox> resultData = loadBoundingBoxData(rel_path + mask_path);
-    std::vector<BoundingBox> resultData_rev = loadBoundingBoxData(rel_path + mask_path, true, true);
-    //std::vector<BoundingBox> predData = loadBoundingBoxData(rel_path + complete);
-    float result_bb = processBoxPreds(resultData, resultData);
-    float result_bb_rev = processBoxPreds(resultData, resultData_rev);
+    //std::cout << "------\nEvaluation Pipeline" << std::endl;
+    //std::vector<BoundingBox> resultData = loadBoundingBoxData(rel_path + mask_path);
+    //std::vector<BoundingBox> resultData_rev = loadBoundingBoxData(rel_path + mask_path, true, true);
+    ////std::vector<BoundingBox> predData = loadBoundingBoxData(rel_path + complete);
+    //float result_bb = processBoxPreds(resultData, resultData);
+    //float result_bb_rev = processBoxPreds(resultData, resultData_rev);
 
-    //AP for each image
-    singleImageAP(resultData, resultData_rev, resultData_rev, images.size());
+    ////AP for each image
+    //singleImageAP(resultData, resultData_rev, resultData_rev, images.size());
 
 
 
@@ -185,7 +159,7 @@ int main(int argc, char** argv)
     //float result_seg_rev = processSemanticSegmentation(segmentationGOLD_REV, segmentationPRED);
 
     std::cout << "------\n";
-    std::cout << "mAP: " << result_bb_rev << " " << result_bb;//std::max(result_bb_rev, result_bb_rev) << std::endl;
+    //std::cout << "mAP: " << result_bb_rev << " " << result_bb;//std::max(result_bb_rev, result_bb_rev) << std::endl;
     //std::cout << "IoU: " << std::max(result_seg, result_seg_rev) << std::endl;
 
     //Show results, uncomment to show

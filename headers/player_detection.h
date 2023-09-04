@@ -12,5 +12,9 @@ void clustering(cv::Mat image_box, cv::Mat& clustered);
 
 void create_mask(cv::Mat image, cv::Mat& mask, std::string str);
 
+void create_lines(cv::Mat edges, cv::Mat& output_edges);
+
+void super_impose(cv::Mat clustering, cv::Mat mask, std::vector<int> box_parameters);
+
 
 #endif // !PLAYER_DETECTION_H
