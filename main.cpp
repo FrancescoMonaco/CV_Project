@@ -1,4 +1,4 @@
-// CV_Project.cpp : Francesco Pio Monaco
+// main.cpp : Francesco Pio Monaco
 
 #include "../CV_Project/headers/Utility.h" 
 #include "../CV_Project/headers/header.h"
@@ -7,19 +7,31 @@
 #include "../CV_Project/headers/write_results.h"
 
 // ***STRING CONSTANTS***
-const std::string rel_path = "D:/Download/Sport_scene_dataset";
 const std::string partial = "/ProcessedBoxes/";
-const std::string complete = "/Predictions/";
+const std::string complete = "/Predictions";
+const std::string mask_path = "/Masks";
 
 
+////// COSE DA FARE
+// 1) scrivere dell'augmentation nel paper
+// 2) Eval print delle metriche foto singola
+// 
 
 // ***MAIN***
-int main()
+int main(int argc, char** argv)
 {
+    // LOAD ZONE
+        //Check if the number of arguments is correct
+    if (argc != 2) {
+		std::cout << "Usage: " << argv[0] << " <relative_path>" << std::endl;
+		return -1;
+	}
+        //Take the rel path from argv
+    std::string rel_path = argv[1];
 
     std::string path = rel_path + "/Images/*.jpg"; //select only jpg
 
-    // Load images
+        // Load images
     std::vector<cv::Mat> images;
     std::vector<cv::String> fn;
     cv::glob(path, fn, true);
@@ -30,12 +42,14 @@ int main()
         if (im.empty()) continue; //only proceed if successful
         images.push_back(im);
     }
-    std::cout << "Starting working on the images" << std::endl;
+
+    std::cout << "------\nStarting image processing pipeline" << std::endl;
     // BEGIN OF THE PROCESSING PIPELINE
 
     std::vector<BoundingBox> processedData = loadBoundingBoxData(rel_path + "/Masks", true);
     //Reorganize the vector into a vector of vectors of BoundingBoxes
     std::vector<std::vector<cv::Rect>> processedData2 = reshapeBB(processedData);
+
     /*
     // for each image, keep also the relative fn during the loop
     for (size_t k = 0; k < images.size(); k++) {
@@ -68,8 +82,8 @@ int main()
          //Strings to save the files
          boxes = rel_path + "/Masks/im" + std::to_string(num);
          boxes = boxes + "_bb.txt";
-         std::string seg_bin_file = rel_path + complete + "im" + std::to_string(num) + "_bin.png";
-         std::string seg_color_file = rel_path + complete + "im" + std::to_string(num) + "_color.png";
+         std::string seg_bin_file = rel_path + complete + "/im" + std::to_string(num) + "_bin.png";
+         std::string seg_color_file = rel_path + complete + "/im" + std::to_string(num) + "_color.png";
 
          cv::Mat  image_box = images[k].clone();
 
@@ -149,18 +163,30 @@ int main()
 
 
     
-    //Evaluation Part
-    //std::vector<BoundingBox> resultData = loadBoundingBoxData("D:/Download/Sport_scene_dataset/Masks");
-    //std::vector<BoundingBox> predData = loadBoundingBoxData("D:/Download/Sport_scene_dataset/Masks");
-    //float result = processBoxPreds(resultData, resultData);
-    //std::cout << "mAP: " << result << std::endl;
+    // EVALUATION PIPELINE
+    std::cout << "------\nEvaluation Pipeline" << std::endl;
+    std::vector<BoundingBox> resultData = loadBoundingBoxData(rel_path + mask_path);
+    std::vector<BoundingBox> resultData_rev = loadBoundingBoxData(rel_path + mask_path, true, true);
+    //std::vector<BoundingBox> predData = loadBoundingBoxData(rel_path + complete);
+    float result_bb = processBoxPreds(resultData, resultData);
+    float result_bb_rev = processBoxPreds(resultData, resultData_rev);
 
-    std::vector<cv::Mat> segmentationGOLD = loadSemanticSegmentationData("D:/Download/Sport_scene_dataset/Masks");
-    std::vector<cv::Mat> segmentationGOLD_REV = loadSemanticSegmentationData("D:/Download/Sport_scene_dataset/Masks", true);
-    std::vector<cv::Mat> segmentationPRED = loadSemanticSegmentationData("D:/Download/Sport_scene_dataset/Predictions");
-    float result_seg = processSemanticSegmentation(segmentationGOLD, segmentationPRED);
-    float result_seg_rev = processSemanticSegmentation(segmentationGOLD_REV, segmentationPRED);
-    std::cout << "IoU: " << std::max(result_seg, result_seg_rev) << std::endl;
+    //AP for each image
+    singleImageAP(resultData, resultData_rev, resultData_rev, images.size());
+
+
+
+    //std::vector<cv::Mat> segmentationGOLD = loadSemanticSegmentationData(rel_path + mask_path);
+    //std::vector<cv::Mat> segmentationGOLD_REV = loadSemanticSegmentationData(rel_path + mask_path, true);
+    //std::vector<cv::Mat> segmentationPRED = loadSemanticSegmentationData(rel_path + complete);
+    //std::cout << "Semantic Segmentation Eval" << std::endl;
+    //float result_seg = processSemanticSegmentation(segmentationGOLD, segmentationPRED);
+    //std::cout << "Semantic Segmentation Reverse Eval" << std::endl;
+    //float result_seg_rev = processSemanticSegmentation(segmentationGOLD_REV, segmentationPRED);
+
+    std::cout << "------\n";
+    std::cout << "mAP: " << result_bb_rev << " " << result_bb;//std::max(result_bb_rev, result_bb_rev) << std::endl;
+    //std::cout << "IoU: " << std::max(result_seg, result_seg_rev) << std::endl;
 
     //Show results, uncomment to show
     //showResults("D:/Download/Sport_scene_dataset/Images", "D:/Download/Sport_scene_dataset/Masks");

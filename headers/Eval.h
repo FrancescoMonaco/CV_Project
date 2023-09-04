@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <opencv2/core.hpp>
+
 struct BoundingBox {
     int fileNum;
     int x1;
@@ -33,10 +34,18 @@ std::vector<cv::Mat> loadSemanticSegmentationData(const std::string& filePath, b
 float processBoxPreds(const std::vector<BoundingBox>& resultData, const std::vector<BoundingBox>& predData);
 
 /// @brief computes the AP
-/// @param precision , vector of precision values for each class at each time point
-/// @param recall , vector of recall values for each class at each time point
-/// @return AP for each class
-std::vector<float> computeAP(const std::vector<std::vector<float>>& precision, const std::vector<std::vector<float>>& recall);
+/// @param PredData , vector of bounding boxes from the prediction file
+/// @param ResultData , vector of bounding boxes from the result file
+/// @param label , class label
+/// @return AP for given class
+float computeAP(const std::vector<BoundingBox> PredData, const std::vector<BoundingBox> ResultData, int label);
+
+/// @brief computes the AP for a single image and prints it
+/// @param resultData , vector of bounding boxes from the result file
+/// @param resultData_rev , vector of bounding boxes from the result file reversed
+/// @param predData , vector of bounding boxes from the prediction file
+/// @param size , size of the vector
+void singleImageAP(const std::vector<BoundingBox> resultData, const std::vector<BoundingBox> resultData_rev, const std::vector<BoundingBox> predData, int size);
 
 /// @brief Computes IoU for the segmentation task over the datasets provided
 /// @param resultData , vector of gold segmentation images
@@ -44,11 +53,17 @@ std::vector<float> computeAP(const std::vector<std::vector<float>>& precision, c
 /// @return IoU value
 float processSemanticSegmentation(const std::vector<cv::Mat>& resultData, const std::vector<cv::Mat>& predData);
 
+/// @brief Computes IoU for the detection task over the bounding boxes
+/// @param box1 bounding box
+/// @param box2 bounding box
+/// @return iou
+double computeIoUBB(const BoundingBox& box1, const BoundingBox& box2);
+
 /// @brief computes IoU for the couple of Mat
 /// @param result , gold Mat
 /// @param pred , prediction Mat
 /// @return IoU for the couple
-float computeIoU(const cv::Mat& result, const cv::Mat& pred);
+float computeIoUSEG(const cv::Mat& result, const cv::Mat& pred);
 
 /// @brief show on screen the results
 /// @param source , path for the original images
