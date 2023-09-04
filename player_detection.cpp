@@ -1,8 +1,4 @@
 #include "player_detection.h"
-#include <iostream>
-#include <vector>
-#include <cmath>
-#include <opencv2/opencv.hpp>
 
 
 void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str){
@@ -10,18 +6,16 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str){
 	
 	std::ifstream file(str);
 	cv::Mat mask = image.clone();
-	//create_mask(image, mask, str);
+	create_mask(image, mask, str);
 	
 	if (file.is_open()) {
 
 		std::string line;
 
-
-		
-
-
 		//take the string with the position of bounding box
 		while (std::getline(file, line)) {
+			std::vector<int> parameters;
+
 			int x, y, w, h;
 
 			std::istringstream iss(line);
@@ -29,6 +23,11 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str){
 			iss >> x >> y >> w >> h;
 
 			cv::Mat img_out( h, w, CV_8UC3);
+			
+			parameters.push_back(x);
+			parameters.push_back(y);
+			parameters.push_back(w);
+			parameters.push_back(h);
 			//isolate the box CHECK
 			
 			cv::Mat mask_temp = mask.clone();
@@ -36,15 +35,10 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str){
 				for (int i = x; i < x+w; i++) {
 
 					img_out.at<cv::Vec3b>(j-y, i-x) = image.at<cv::Vec3b>(j,i);
-					//mask_temp.at<cv::Vec3b>(j,i)= image.at<cv::Vec3b>(j, i);
+					mask_temp.at<cv::Vec3b>(j,i)= image.at<cv::Vec3b>(j, i);
 
 				}
-			}/*
-			cv::imshow("box", img_out);
-			cv::waitKey(0);
-			*/
-			//cv::Mat clustered;
-			//clustering(mask_temp, clustered);
+			}
 
 			cv::Mat blur;
 			cv::GaussianBlur(img_out,blur,cv::Size(5,5),0.4,0.4);
@@ -67,7 +61,6 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str){
 			double median = mean[0];
 			int canny_c = 5;
 			
-			//std::cout << "Median: " << median << std::endl;
 			
 			cv::Mat edges;
 			
@@ -83,25 +76,19 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str){
 			
 		//	cv::imshow(" ", edges);
 			//cv::waitKey(0);
+			create_lines(edges, edges);
 
 			//i use this function to color inside the figures
 			fill_segments(edges);
 	
-			//cv::imshow(" ", edges);
-			//cv::waitKey(0);
+			cv::imshow(" ", edges);
+			cv::waitKey(0);
 			
 		
-			//cv::imshow("segmentation", segmented_image);
-			//cv::waitKey(0);
+			
+			
 
-			cv::destroyAllWindows();
-
-
-			cv::Mat img(edges.size(), CV_8UC3);
-
-			std::vector<cv::Vec3b> colors;
-
-
+			
 			//create the final mask for segmentation
 
 			for (int j = y; j < y + h; j++) {
@@ -116,16 +103,21 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str){
 					}
 				}
 			}
+		
+			/*
+			cv::Mat cluster;
+			clustering(mask_temp, cluster);
+
+			super_impose(cluster,edges,parameters);
+			*/
+			cv::destroyAllWindows();
 		}
 		
-
+		
 	}
 	else {
 		std::cout << "error path\n";
 	}
-	
-	
-	
 	
 }
 
@@ -150,15 +142,19 @@ void close_lines(cv::Mat& edge_image){
 	cv::Mat img_out1;
 	morphologyEx(img_out, img_out1, cv::MORPH_ERODE, element, cv::Point(-1,-1), 2);
 	
+	cv::Mat img_out2;
+	morphologyEx(img_out1, img_out2, cv::MORPH_DILATE, element, cv::Point(-1,-1), 1);
+	
+	cv::Mat element1 = getStructuringElement(cv::MORPH_ELLIPSE
+		, cv::Size(3, 3));
+	
+	cv::Mat img_out3;
+	morphologyEx(img_out2, img_out3, cv::MORPH_DILATE, element1, cv::Point(-1, -1), 1);
 
 	//cv::imshow("algo", img_out1);
 	//cv::waitKey(0);
 
-
-
-	
-
-	edge_image = img_out1.clone();
+	edge_image = img_out3.clone();
 }
 
 
@@ -180,8 +176,8 @@ void fill_segments(cv::Mat& edge_image) {
 		drawContours(edge_image, contours, idx, color, cv::FILLED, 8, hierarchy);
 	}
 
-	cv::imshow("Components", edge_image);
-	cv::waitKey(0);
+	//cv::imshow("Components", edge_image);
+	//cv::waitKey(0);
 }
 
 
@@ -190,7 +186,7 @@ void fill_segments(cv::Mat& edge_image) {
 void clustering(cv::Mat image_box, cv::Mat& cluster) {
 	
 	
-	int numClusters = 8; // Number of desired colors after quantization
+	int numClusters = 6; // Number of desired colors after quantization
 	cv::Mat labels, centers;
 	cv::TermCriteria criteria = cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 10, 0.1);
 
@@ -228,26 +224,25 @@ void clustering(cv::Mat image_box, cv::Mat& cluster) {
 		flattened_data.at<float>(i, 0) = vec[i][0];
 		flattened_data.at<float>(i, 1) = vec[i][1];
 		flattened_data.at<float>(i, 2) = vec[i][2];
-		//flattened_data.at<float>(i, 4) = pixel_positions[i].x;         // X
-		//flattened_data.at<float>(i, 5) = pixel_positions[i].y;         // Y
+		
 	}
 
-
+	cv::normalize(flattened_data, flattened_data, 0, 1, cv::NORM_MINMAX);
 
 	//cv::Mat flat = image_box.reshape(1, image_box.cols * image_box.rows);
 	cv::kmeans(flattened_data, numClusters, labels, criteria, 40, cv::KMEANS_PP_CENTERS, centers);
 
 	// Define replacement colors
-	cv::Vec3b colors[5];
+	cv::Vec3b colors[6];
 
-	colors[0] = cv::Vec3b(255, 0, 0); // Red
-	colors[1] = cv::Vec3b(0, 0, 255); // Blue
-	colors[2] = cv::Vec3b(0, 255, 0); // green 
+	colors[0] = cv::Vec3b(255, 0, 0); 
+	colors[1] = cv::Vec3b(0, 0, 255); 
+	colors[2] = cv::Vec3b(0, 255, 0); 
 	colors[3] = cv::Vec3b(255, 255, 255);  
 	colors[4] = cv::Vec3b(255, 255, 0);  
 	colors[5] = cv::Vec3b(255,0, 255);  
-	colors[6] = cv::Vec3b(0, 255, 255);  
-	colors[7] = cv::Vec3b(100, 100, 100);  
+	//colors[6] = cv::Vec3b(0, 255, 255);  
+	//colors[7] = cv::Vec3b(100, 100, 100);  
 
 
 
@@ -318,6 +313,226 @@ void create_mask(cv::Mat image,cv::Mat& mask, std::string str ) {
 		std::cout << "error path\n";
 	}
 
-	cv::imshow("mask", mask);
+	//cv::imshow("mask", mask);
+	//cv::waitKey(0);
+}
+
+
+
+void create_lines(cv::Mat edges, cv::Mat& output_edges) {
+
+	std::vector<cv::Point> starters;
+	std::vector<cv::Point> terminators;
+	
+
+	/*cv::imshow("first edges", edges);
+	cv::waitKey(0);*/
+
+	bool start = false;
+	
+	starters.clear();
+	terminators.clear();
+
+	for (int j = 0; j < edges.cols; j++) {
+		
+		uchar pixel = edges.at<uchar>(0, j);
+
+		if (!start && pixel == 255 && edges.at<uchar>(0, j + 1) != 255) {
+
+			starters.push_back(cv::Point(j, 0));
+			start = true;
+		}
+
+		else if (start && pixel == 255) {
+			
+			start = false;
+			terminators.push_back(cv::Point(j, 0));
+			//std::cout << "found\n";
+		}
+
+	}
+
+	if (start) {
+		starters.pop_back();
+
+	}
+
+
+	//create the line
+	for (int i = 0; i < starters.size(); i++) {
+
+	//	std::cout<< starters[i] <<std::endl;
+		//take stating and ending point
+		cv::Point starte = starters[i];
+		cv::Point end = terminators[i];
+		
+		if (end.x - starte.x > 30) {
+
+		}
+		else {
+			for (int j = starte.x; j < end.x; j++) {
+
+				edges.at<uchar>(0, j) = 255;
+				edges.at<uchar>(1, j) = 255;
+				edges.at<uchar>(2, j) = 255;
+				edges.at<uchar>(3, j) = 255;
+				edges.at<uchar>(4, j) = 255;
+
+			}
+		}
+
+	}
+
+
+
+	//---------------
+
+	start = false;
+
+	starters.clear();
+	terminators.clear();
+
+	int n_rows = edges.rows;
+
+	for (int j = 0; j < edges.cols; j++) {
+
+		uchar pixel = edges.at<uchar>(n_rows-1, j);
+
+		if (!start && pixel == 255 && edges.at<uchar>(n_rows-1, j + 1) != 255) {
+
+			starters.push_back(cv::Point(j, n_rows-1));
+			start = true;
+
+		}
+
+		else if (start & pixel == 255) {
+			start = false;
+			terminators.push_back(cv::Point(j, n_rows-1));
+			//std::cout << "found\n";
+		}
+
+	}
+
+	if (start = true) {
+		starters.pop_back();
+
+	}
+
+
+
+	//create the line
+	for (int i = 0; i < starters.size(); i++) {
+
+		//take stating and ending point
+		cv::Point starte = starters[i];
+		cv::Point end = terminators[i];
+
+		if (end.x - starte.x < 25 && end.x - starte.x>40) {
+			continue;
+		}
+		else {
+			for (int j = starte.x; j < end.x; j++) {
+
+				edges.at<uchar>(n_rows-1, j) = 255;
+				edges.at<uchar>(n_rows-2, j) = 255;
+				edges.at<uchar>(n_rows-3, j) = 255;
+				edges.at<uchar>(n_rows-4, j) = 255;
+				edges.at<uchar>(n_rows-5, j) = 255;
+
+			}
+		}
+
+	}
+
+	//cv::imshow("new edges", edges);
+	//cv::waitKey(0);
+
+	output_edges = edges.clone();
+}
+
+
+
+void super_impose(cv::Mat clustering, cv::Mat mask, std::vector<int> box_parameters) {
+
+	//take box parameters location
+	int x = box_parameters[0];
+	int y = box_parameters[1];
+	int w = box_parameters[2];
+	int h = box_parameters[3];
+
+	cv::Mat box_superimpose(mask.size(),CV_8UC3);
+	cv::Mat box(mask.size(), CV_8UC3);
+
+	for (int i = y; i < y + h; i++) {
+		for (int j = x; j < x + w; j++) {
+
+			//super impose
+			if (mask.at<uchar>(i - y, j - x)==255) {
+				
+				box_superimpose.at<cv::Vec3b>(i - y, j - x) =clustering.at<cv::Vec3b>(i,j) ;
+
+			}
+			else {
+				box_superimpose.at<cv::Vec3b>(i - y, j - x) = cv::Vec3b(0, 0, 0);
+			}
+
+			box.at<cv::Vec3b>(i-y,j-x)= clustering.at<cv::Vec3b>(i, j);
+
+		}
+
+	}
+
+	cv::imshow("box segmented", box_superimpose);
+	//cv::imshow("box", box);
 	cv::waitKey(0);
+
+	cv::Mat final_segmentation;
+	std::vector<cv::Vec3b> colors;
+
+	//find all the color aoutside the shape of the mask
+	for (int i = 0; i < mask.rows; i++) {
+		for (int j = 0; j < mask.cols; j++) {
+
+			if (box_superimpose.at<cv::Vec3b>(i, j) == cv::Vec3b(0, 0, 0)) {
+				
+				cv::Vec3b color = box.at<cv::Vec3b>(i, j);
+				
+				auto it = std::find(colors.begin(),colors.end(),color);
+				
+				if (it != colors.end()) {
+					continue;
+				}
+				else {
+					colors.push_back(color);
+				}
+
+			}
+
+		}
+	}
+
+	
+	for (int z = 0; z < colors.size(); z++) {
+		
+		cv::Vec3b color = colors[z];
+		
+		for (int i = 0; i < mask.rows; i++) {
+			for (int j = 0; j < mask.cols; j++) {
+
+
+				if (box_superimpose.at<cv::Vec3b>(i, j) == color) {
+
+					box_superimpose.at<cv::Vec3b>(i, j) = cv::Vec3b(0, 0, 0);
+				}
+
+			}
+		}
+		
+
+
+	}
+	cv::imshow("final", box_superimpose);
+	cv::waitKey(0);
+
+
 }
