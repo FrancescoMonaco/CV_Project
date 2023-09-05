@@ -13,7 +13,7 @@ void create_mask(cv::Mat image, cv::Mat& mask, std::string str);
 
 void create_lines(cv::Mat edges, cv::Mat& output_edges);
 
-void super_impose(cv::Mat clustering, cv::Mat mask, std::vector<int> box_parameters);
+void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parameters);
 
 bool sortbysec(const std::pair<int, cv::Vec3b>& a,
 	const std::pair<int, cv::Vec3b>& b);
