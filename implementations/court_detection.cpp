@@ -129,7 +129,7 @@ void color_quantization(cv::Mat image, cv::Mat& img_out, cv::Mat& centers) {
 	}
 
 	img_out = clustered.clone();
-
+	cv::imshow("Quantization", img_out);
 	//std::vector<double> distances;
 	//distances = maximum_distance(image, clustered, centers);
 
@@ -244,7 +244,7 @@ bool line_refinement(cv::Mat& image, cv::Vec2f& longest_line) {
 	// Apply edge detection (e.g., Canny)
 	cv::Mat edges;
 	cv::Canny(image_seg_gray, edges, 50, 150);
-
+	cv::imshow("Edge map watershed", edges);
 	// Apply Hough Line Transform
 	std::vector<cv::Vec2f> lines;
 	cv::HoughLines(edges, lines, 1, CV_PI / 180, 100);
@@ -366,5 +366,5 @@ void court_segmentation_refinement(cv::Mat& segmentation, cv::Vec2f& line) {
 			}
 		}
 	}
-
+	cv::imshow("Refined", segmentation);
 }

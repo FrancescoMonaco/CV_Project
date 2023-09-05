@@ -16,5 +16,8 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges);
 
 void super_impose(cv::Mat clustering, cv::Mat mask, std::vector<int> box_parameters);
 
+bool sortbysec(const std::pair<int, cv::Vec3b>& a,
+	const std::pair<int, cv::Vec3b>& b);
+
 
 #endif // !PLAYER_DETECTION_H
