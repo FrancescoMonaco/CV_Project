@@ -40,8 +40,9 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str){
 				}
 			}
 
+
 			cv::Mat blur;
-			cv::GaussianBlur(img_out,blur,cv::Size(5,5),0.4,0.4);
+			cv::GaussianBlur(img_out,blur,cv::Size(5,5),0.8,0.8);
 			
 			cv::Mat img_grey;
 			cvtColor(blur, img_grey, cv::COLOR_BGR2GRAY);
@@ -67,15 +68,16 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str){
 
 			cv::Canny(img_grey, edges, canny_c*median/4, canny_c * median / 2);
 			
-	//		cv::imshow("canny ", edges);
-		//	cv::waitKey(0);
+			/*cv::imshow("canny ", edges);
+			cv::waitKey(0);*/
 
 
 			//close the lines found out by using the clustering and after removing the less important 
 			close_lines(edges);
 			
-		//	cv::imshow(" ", edges);
-			//cv::waitKey(0);
+			/*cv::imshow(" ", edges);
+			cv::waitKey(0);*/
+
 			create_lines(edges, edges);
 
 			//i use this function to color inside the figures
@@ -103,13 +105,14 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str){
 					}
 				}
 			}
-		
-			/*
-			cv::Mat cluster;
+		/*
+			cv::imshow("mask", mask_temp);
+			cv::waitKey(0);
+		*/	cv::Mat cluster;
 			clustering(mask_temp, cluster);
 
 			super_impose(cluster,edges,parameters);
-			*/
+			
 			cv::destroyAllWindows();
 		}
 		
@@ -186,7 +189,7 @@ void fill_segments(cv::Mat& edge_image) {
 void clustering(cv::Mat image_box, cv::Mat& cluster) {
 	
 	
-	int numClusters = 6; // Number of desired colors after quantization
+	int numClusters = 8; // Number of desired colors after quantization
 	cv::Mat labels, centers;
 	cv::TermCriteria criteria = cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 10, 0.1);
 
@@ -208,14 +211,12 @@ void clustering(cv::Mat image_box, cv::Mat& cluster) {
 			else {
 
 				vec.push_back(image_box.at<cv::Vec3b>(i, j));
-				mask.at<uchar>(i, j) = 1;
+				mask.at<uchar>(i, j) =1;
 				pixel_positions.push_back(cv::Point(j, i)); // Store pixel positions
 
 			}
 		}
 	}
-
-
 
 	// Convert Vec3b data to a format suitable for K-means
 	cv::Mat flattened_data(vec.size(), 3, CV_32F);
@@ -230,10 +231,10 @@ void clustering(cv::Mat image_box, cv::Mat& cluster) {
 	cv::normalize(flattened_data, flattened_data, 0, 1, cv::NORM_MINMAX);
 
 	//cv::Mat flat = image_box.reshape(1, image_box.cols * image_box.rows);
-	cv::kmeans(flattened_data, numClusters, labels, criteria, 40, cv::KMEANS_PP_CENTERS, centers);
+	cv::kmeans(flattened_data, numClusters, labels, criteria, 100, cv::KMEANS_PP_CENTERS, centers);
 
 	// Define replacement colors
-	cv::Vec3b colors[6];
+	cv::Vec3b colors[8];
 
 	colors[0] = cv::Vec3b(255, 0, 0); 
 	colors[1] = cv::Vec3b(0, 0, 255); 
@@ -241,8 +242,8 @@ void clustering(cv::Mat image_box, cv::Mat& cluster) {
 	colors[3] = cv::Vec3b(255, 255, 255);  
 	colors[4] = cv::Vec3b(255, 255, 0);  
 	colors[5] = cv::Vec3b(255,0, 255);  
-	//colors[6] = cv::Vec3b(0, 255, 255);  
-	//colors[7] = cv::Vec3b(100, 100, 100);  
+	colors[6] = cv::Vec3b(0, 255, 255);  
+	colors[7] = cv::Vec3b(100, 100, 100);  
 
 
 
@@ -301,6 +302,7 @@ void create_mask(cv::Mat image,cv::Mat& mask, std::string str ) {
 			
 			for (int j = y; j < y + h; j++) {
 				for (int i = x; i < x + w; i++) {
+					
 					
 					mask.at<cv::Vec3b>(j, i) = cv::Vec3b(0, 0, 0);
 
@@ -405,7 +407,7 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 
 		}
 
-		else if (start & pixel == 255) {
+		else if (start && pixel == 255) {
 			start = false;
 			terminators.push_back(cv::Point(j, n_rows-1));
 			//std::cout << "found\n";
@@ -413,7 +415,7 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 
 	}
 
-	if (start = true) {
+	if (start) {
 		starters.pop_back();
 
 	}
@@ -450,8 +452,11 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 	output_edges = edges.clone();
 }
 
-
-
+bool sortbysec(const std::pair<int, cv::Vec3b>& a,
+	const std::pair<int, cv::Vec3b>& b)
+{
+	return (a.first > b.first);
+}
 void super_impose(cv::Mat clustering, cv::Mat mask, std::vector<int> box_parameters) {
 
 	//take box parameters location
@@ -462,7 +467,7 @@ void super_impose(cv::Mat clustering, cv::Mat mask, std::vector<int> box_paramet
 
 	cv::Mat box_superimpose(mask.size(),CV_8UC3);
 	cv::Mat box(mask.size(), CV_8UC3);
-
+	cv::Mat reverse_box(mask.size(),CV_8UC3);
 	for (int i = y; i < y + h; i++) {
 		for (int j = x; j < x + w; j++) {
 
@@ -470,10 +475,11 @@ void super_impose(cv::Mat clustering, cv::Mat mask, std::vector<int> box_paramet
 			if (mask.at<uchar>(i - y, j - x)==255) {
 				
 				box_superimpose.at<cv::Vec3b>(i - y, j - x) =clustering.at<cv::Vec3b>(i,j) ;
-
+				reverse_box.at<cv::Vec3b>(i - y, j - x) = cv::Vec3b(0, 0, 0);
 			}
 			else {
 				box_superimpose.at<cv::Vec3b>(i - y, j - x) = cv::Vec3b(0, 0, 0);
+				reverse_box.at<cv::Vec3b>(i - y, j - x)= clustering.at<cv::Vec3b>(i, j);
 			}
 
 			box.at<cv::Vec3b>(i-y,j-x)= clustering.at<cv::Vec3b>(i, j);
@@ -482,12 +488,19 @@ void super_impose(cv::Mat clustering, cv::Mat mask, std::vector<int> box_paramet
 
 	}
 
+	/*
+	cv::imshow("reverse box segmentation", reverse_box);
 	cv::imshow("box segmented", box_superimpose);
-	//cv::imshow("box", box);
+	cv::imshow("box", box);
 	cv::waitKey(0);
+	*/
+
+
 
 	cv::Mat final_segmentation;
 	std::vector<cv::Vec3b> colors;
+	//std::vector<int> pixels;
+	std::vector<std::pair<int, cv::Vec3b>> combinedVector;
 
 	//find all the color aoutside the shape of the mask
 	for (int i = 0; i < mask.rows; i++) {
@@ -503,6 +516,11 @@ void super_impose(cv::Mat clustering, cv::Mat mask, std::vector<int> box_paramet
 					continue;
 				}
 				else {
+					
+					cv::Mat temp;
+					cv::inRange(reverse_box, color, color,temp);
+					int pixel=cv::countNonZero(temp);
+					combinedVector.push_back(std::pair(pixel,color));
 					colors.push_back(color);
 				}
 
@@ -512,9 +530,19 @@ void super_impose(cv::Mat clustering, cv::Mat mask, std::vector<int> box_paramet
 	}
 
 	
-	for (int z = 0; z < colors.size(); z++) {
+
+	//sort the vector
+	/*auto customComparator = [&pixels](int a, int b) {
+		int index_a = std::distance(pixels.begin(), std::find(pixels.begin(), pixels.end(), a));
+		int index_b = std::distance(pixels.begin(), std::find(pixels.begin(), pixels.end(), b));
+		return index_a > index_b;
+	};*/
+
+	std::sort(combinedVector.begin(), combinedVector.end(), sortbysec);
+	//i take only the pixel who are the most out o
+	for (int z = 0; z < 4; z++) {
 		
-		cv::Vec3b color = colors[z];
+		cv::Vec3b color = combinedVector[z].second;
 		
 		for (int i = 0; i < mask.rows; i++) {
 			for (int j = 0; j < mask.cols; j++) {
@@ -536,3 +564,4 @@ void super_impose(cv::Mat clustering, cv::Mat mask, std::vector<int> box_paramet
 
 
 }
+
