@@ -12,26 +12,50 @@ std::vector<cv::Vec3b> colors = { cv::Vec3b(0, 0, 255), cv::Vec3b(255, 0, 0) };
 
 void removeUniformRect(std::vector<cv::Rect>& rects, cv::Mat image, int threshold)
 {
+    //compute canny of the whole image
+cv::Mat canny;
+	cv::Canny(image, canny, 100, 200);
+
+    //vector of the number of pixels in the rectangle that are edges
+    std::vector<int> count(rects.size(), 0);
     for (size_t i = 0; i < rects.size(); i++)
     {
         resizeRect(rects[i], image);
         cv::Rect r = rects[i];
-        //Calculate color variation within the detected rectangle
-        cv::Mat detected_region = image(cv::Rect(r.x, r.y, r.width, r.height));
-        cv::Scalar mean_color, stddev_color;
-        cv::meanStdDev(detected_region, mean_color, stddev_color);
-        double color_variation = stddev_color[0]; // Assuming grayscale image
-        if (color_variation > threshold)
-        {
-            //Put the rectangle in the vector only if it doesn't contain a semi uniform color
-            rects[i] = r;
-        }
-        else
-        {
-            rects.erase(rects.begin() + i);
-            i--;
-        }
-    }
+        //count the number of pixels in the rectangle that are edges and compute the mean
+        int counting = 0;
+
+        for (int y = r.y; y < r.y + r.height; y++)
+		        {
+			        for (int x = r.x; x < r.x + r.width; x++)
+			        {
+				        if (canny.at<uchar>(y, x) == 255)
+				        {
+					        counting++;
+				        }
+			        }
+		        }
+        count[i] = counting;
+     }
+    //find the mean of the number of pixels that are edges
+int mean = 0;
+	for (size_t i = 0; i < count.size(); i++)
+	{
+		mean += count[i];
+	}
+	mean /= count.size();
+	//remove the rectangles that have a number of pixels that are edges that is less than the mean
+	for (size_t i = 0; i < count.size(); i++)
+	{
+		if (count[i] < mean-150)
+		{
+			rects.erase(rects.begin() + i);
+            //erase also the corresponding count
+count.erase(count.begin() + i);
+			i--;
+		}
+	}
+
 }
 
 void mergeOverlapRect(std::vector<cv::Rect>& rects, int threshold)
@@ -99,10 +123,11 @@ void mergeOverlapRect(std::vector<cv::Rect>& rects, int threshold)
 
 void cleanRectangles(std::vector<cv::Rect>& rects, cv::Mat image)
 {
+    
     cv::Mat mskd = computeDiffusion(image);
-    removeUniformRect(rects, mskd, 30);
-    removeFlatRect(rects);
-    mergeOverlapRect(rects, 0);
+    removeUniformRect(rects, image, 15);
+    //removeFlatRect(rects);
+    //mergeOverlapRect(rects, 5);
 }
 
 cv::Mat computeDiffusion(cv::Mat image)
@@ -164,7 +189,9 @@ cv::Mat computeDiffusion(cv::Mat image)
 
 std::vector<std::vector<cv::Rect>> reshapeBB(std::vector<BoundingBox> bbs, int NUM_IMAGES)
 {
+    //Initialize to NUM_IMAGES empty vectors
     std::vector<std::vector<cv::Rect>> processedData2;
+
     for (int i = 0; i < NUM_IMAGES; i++)
     {
 		std::vector<cv::Rect> processedData;
@@ -176,6 +203,7 @@ std::vector<std::vector<cv::Rect>> reshapeBB(std::vector<BoundingBox> bbs, int N
 				processedData.push_back(r);
 			}
 		}
+
 		processedData2.push_back(processedData);
 	}
 

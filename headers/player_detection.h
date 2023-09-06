@@ -21,12 +21,23 @@ void fill_segments(cv::Mat& edge_image);
 /// @param clustered output array
 void clustering(cv::Mat image_box, cv::Mat& clustered);
 
+/// @brief Creates a mask on the image using the bounding box stored in the file
+/// @param image input image
+/// @param mask output mask
+/// @param str path where the bounding box is stored
 void create_mask(cv::Mat image, cv::Mat& mask, std::string str);
 
+/// @brief Closes the edges of an edge image to form complete lines
+/// @param edges edge image
+/// @param output_edges closed edges
 void create_lines(cv::Mat edges, cv::Mat& output_edges);
 
 void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parameters);
 
+/// @brief Compares two pairs of int and Vec3b
+/// @param a pair of int and Vec3b
+/// @param b pair of int and Vec3b
+/// @return true if a is more than b
 bool sortbysec(const std::pair<int, cv::Vec3b>& a,
 	const std::pair<int, cv::Vec3b>& b);
 

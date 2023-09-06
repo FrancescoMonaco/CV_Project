@@ -46,21 +46,30 @@ int main(int argc, char** argv)
     std::cout << "------\nStarting image processing pipeline" << std::endl;
     // BEGIN OF THE PROCESSING PIPELINE
 
-    std::vector<BoundingBox> processedData = loadBoundingBoxData(rel_path + "/Masks", true);
+    std::vector<BoundingBox> processedData = loadBoundingBoxData(rel_path + "/ProcessedBoxes", false);
     //Reorganize the vector into a vector of vectors of BoundingBoxes
     std::vector<std::vector<cv::Rect>> processedData2 = reshapeBB(processedData);
 
     
     // for each image, keep also the relative fn during the loop
-    /*
+    
     for (size_t k = 0; k < images.size(); k++) {
         //pick the fn of the image
          cv::String fn2 = fn[k];
          int num = extractNumber(fn2);
          std::cout << num << std::endl;
          std::cout << "Boxes before cleaning: " << processedData2[num-1].size() << std::endl;
-         //cleanRectangles(processedData2[k], images[k]);
-         //std::cout << "Boxes after cleaning: " << processedData2[k].size() << std::endl;
+         cleanRectangles(processedData2[num-1], images[k]);
+         std::cout << "Boxes after cleaning: " << processedData2[num-1].size() << std::endl;
+
+         //Put the boxes on the image and show it
+        for (size_t i = 0; i < processedData2[num-1].size(); i++) {
+            //check
+			 cv::rectangle(images[k], processedData2[num-1][i], cv::Scalar(0, 255, 0), 2);
+		 }
+
+        cv::imshow("Image", images[k]);
+        cv::waitKey(0);
 
          std::string boxes = rel_path + "Images/im" + std::to_string(num);
 
@@ -86,7 +95,7 @@ int main(int argc, char** argv)
 
 
          cv::Mat seg_image(image_box.size(), CV_8UC1);
-         player_segmentation(image_box, seg_image, boxes);
+         //player_segmentation(image_box, seg_image, boxes);
 
          //cv::imshow("Image", seg_image);
 
@@ -95,28 +104,28 @@ int main(int argc, char** argv)
 
 
          //eliminate boxes inside the image to have a better field detection 
-          player_elimination(image_box, mask, seg_image);
-          color_quantization(image_box, clustered, centroid);
+          //player_elimination(image_box, mask, seg_image);
+          //color_quantization(image_box, clustered, centroid);
           cv::Mat segmentation = clustered.clone();
-          field_distinction(image_box, clustered, segmentation);
+          //field_distinction(image_box, clustered, segmentation);
 
 
 
-          cv::Vec2f line;
-          bool val = line_refinement(image_box, line);
-          if (val) {
-              court_segmentation_refinement(segmentation, line);
-          }
+          //cv::Vec2f line;
+          //bool val = line_refinement(image_box, line);
+          //if (val) {
+          //    court_segmentation_refinement(segmentation, line);
+          //}
 
-          std::vector<int> labels = classify(images[k], processedData2[num - 1]);
+          //std::vector<int> labels = classify(images[k], processedData2[num - 1]);
 
-          unifySegmentation(segmentation, seg_image, processedData2[num - 1], labels);
+          //unifySegmentation(segmentation, seg_image, processedData2[num - 1], labels);
 
-          cv::Mat segmentation_bin = cv::Mat::zeros(segmentation.rows, segmentation.cols, CV_8UC1);
-          createSegmentationPNG(segmentation, segmentation_bin);
-          
-          writeSEG(segmentation_bin, seg_bin_file);
-          writeSEG(segmentation, seg_color_file);
+          //cv::Mat segmentation_bin = cv::Mat::zeros(segmentation.rows, segmentation.cols, CV_8UC1);
+          //createSegmentationPNG(segmentation, segmentation_bin);
+          //
+          //writeSEG(segmentation_bin, seg_bin_file);
+          //writeSEG(segmentation, seg_color_file);
 
           //cv::imshow("Final", segmentation);
           //cv::imshow("Final_bin", segmentation_bin);
@@ -134,7 +143,7 @@ int main(int argc, char** argv)
 		 //cv::waitKey(0);
     }
    
-   */
+   
 
     
     // EVALUATION PIPELINE
@@ -150,17 +159,17 @@ int main(int argc, char** argv)
 
 
 
-    std::vector<cv::Mat> segmentationGOLD = loadSemanticSegmentationData(rel_path + mask_path);
-    std::vector<cv::Mat> segmentationGOLD_REV = loadSemanticSegmentationData(rel_path + mask_path, true);
-    std::vector<cv::Mat> segmentationPRED = loadSemanticSegmentationData(rel_path + complete);
-    std::cout << "Semantic Segmentation Eval" << std::endl;
-    float result_seg = processSemanticSegmentation(segmentationGOLD, segmentationPRED);
-    std::cout << "Semantic Segmentation Reverse Eval" << std::endl;
-    float result_seg_rev = processSemanticSegmentation(segmentationGOLD_REV, segmentationPRED);
+    //std::vector<cv::Mat> segmentationGOLD = loadSemanticSegmentationData(rel_path + mask_path);
+    //std::vector<cv::Mat> segmentationGOLD_REV = loadSemanticSegmentationData(rel_path + mask_path, true);
+    //std::vector<cv::Mat> segmentationPRED = loadSemanticSegmentationData(rel_path + complete);
+    //std::cout << "Semantic Segmentation Eval" << std::endl;
+    //float result_seg = processSemanticSegmentation(segmentationGOLD, segmentationPRED);
+    //std::cout << "Semantic Segmentation Reverse Eval" << std::endl;
+    //float result_seg_rev = processSemanticSegmentation(segmentationGOLD_REV, segmentationPRED);
 
     std::cout << "------\n";
     //std::cout << "mAP: " << result_bb_rev << " " << result_bb;//std::max(result_bb_rev, result_bb_rev) << std::endl;
-    std::cout << "IoU: " << std::max(result_seg, result_seg_rev) << std::endl;
+    //std::cout << "IoU: " << std::max(result_seg, result_seg_rev) << std::endl;
 
     //Show results, uncomment to show
     //showResults("D:/Download/Sport_scene_dataset/Images", "D:/Download/Sport_scene_dataset/Masks");
