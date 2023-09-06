@@ -52,7 +52,7 @@ int main(int argc, char** argv)
 
     
     // for each image, keep also the relative fn during the loop
-    
+    /*
     for (size_t k = 0; k < images.size(); k++) {
         //pick the fn of the image
          cv::String fn2 = fn[k];
@@ -134,7 +134,7 @@ int main(int argc, char** argv)
 		 //cv::waitKey(0);
     }
    
-
+   */
 
     
     // EVALUATION PIPELINE
@@ -150,17 +150,17 @@ int main(int argc, char** argv)
 
 
 
-    //std::vector<cv::Mat> segmentationGOLD = loadSemanticSegmentationData(rel_path + mask_path);
-    //std::vector<cv::Mat> segmentationGOLD_REV = loadSemanticSegmentationData(rel_path + mask_path, true);
-    //std::vector<cv::Mat> segmentationPRED = loadSemanticSegmentationData(rel_path + complete);
-    //std::cout << "Semantic Segmentation Eval" << std::endl;
-    //float result_seg = processSemanticSegmentation(segmentationGOLD, segmentationPRED);
-    //std::cout << "Semantic Segmentation Reverse Eval" << std::endl;
-    //float result_seg_rev = processSemanticSegmentation(segmentationGOLD_REV, segmentationPRED);
+    std::vector<cv::Mat> segmentationGOLD = loadSemanticSegmentationData(rel_path + mask_path);
+    std::vector<cv::Mat> segmentationGOLD_REV = loadSemanticSegmentationData(rel_path + mask_path, true);
+    std::vector<cv::Mat> segmentationPRED = loadSemanticSegmentationData(rel_path + complete);
+    std::cout << "Semantic Segmentation Eval" << std::endl;
+    float result_seg = processSemanticSegmentation(segmentationGOLD, segmentationPRED);
+    std::cout << "Semantic Segmentation Reverse Eval" << std::endl;
+    float result_seg_rev = processSemanticSegmentation(segmentationGOLD_REV, segmentationPRED);
 
     std::cout << "------\n";
     //std::cout << "mAP: " << result_bb_rev << " " << result_bb;//std::max(result_bb_rev, result_bb_rev) << std::endl;
-    //std::cout << "IoU: " << std::max(result_seg, result_seg_rev) << std::endl;
+    std::cout << "IoU: " << std::max(result_seg, result_seg_rev) << std::endl;
 
     //Show results, uncomment to show
     //showResults("D:/Download/Sport_scene_dataset/Images", "D:/Download/Sport_scene_dataset/Masks");

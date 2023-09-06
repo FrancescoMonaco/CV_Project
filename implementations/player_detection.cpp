@@ -273,8 +273,8 @@ void clustering(cv::Mat image_box, cv::Mat& cluster) {
 	cluster = clustered.clone();
 
 
-	cv::imshow("clustering", cluster);
-	cv::waitKey(0);
+	//cv::imshow("clustering", cluster);
+	//cv::waitKey(0);
 
 
 
@@ -339,7 +339,7 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 
 		uchar pixel = edges.at<uchar>(0, j);
 
-		if (!start && pixel == 255 && j+1 != edges.cols &&edges.at<uchar>(0, j + 1) != 255) {
+		if (!start && pixel == 255 && j + 1 != edges.cols && edges.at<uchar>(0, j + 1) != 255) {
 
 			starters.push_back(cv::Point(j, 0));
 			start = true;
@@ -400,7 +400,7 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 
 		uchar pixel = edges.at<uchar>(n_rows - 1, j);
 
-		if (!start && pixel == 255 && j+1 != edges.cols && edges.at<uchar>(n_rows - 1, j + 1) != 255) {
+		if (!start && pixel == 255 && j + 1 != edges.cols && edges.at<uchar>(n_rows - 1, j + 1) != 255) {
 
 			starters.push_back(cv::Point(j, n_rows - 1));
 			start = true;
@@ -452,12 +452,8 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 	output_edges = edges.clone();
 }
 
-bool sortbysec(const std::pair<int, cv::Vec3b>& a,
-	const std::pair<int, cv::Vec3b>& b)
+void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parameters)
 {
-	return (a.first > b.first);
-}
-void super_impose(cv::Mat clustering, cv::Mat mask, std::vector<int> box_parameters) {
 
 	//take box parameters location
 	int x = box_parameters[0];
@@ -539,8 +535,10 @@ void super_impose(cv::Mat clustering, cv::Mat mask, std::vector<int> box_paramet
 	};*/
 
 	std::sort(combinedVector.begin(), combinedVector.end(), sortbysec);
+	// min 4 and dimension of combined vector
+	int ind_f = std::min(4, (int)combinedVector.size());
 	//i take only the pixel who are the most out o
-	for (int z = 0; z < 4; z++) {
+	for (int z = 0; z < ind_f; z++) {
 
 		cv::Vec3b color = combinedVector[z].second;
 
@@ -559,8 +557,11 @@ void super_impose(cv::Mat clustering, cv::Mat mask, std::vector<int> box_paramet
 
 
 	}
-	cv::imshow("final", box_superimpose);
-	cv::waitKey(0);
 
+}
 
+bool sortbysec(const std::pair<int, cv::Vec3b>& a,
+	const std::pair<int, cv::Vec3b>& b)
+{
+	return (a.first > b.first);
 }
