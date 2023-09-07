@@ -32,9 +32,9 @@ void cleanRectangles(std::vector<cv::Rect>& rects, cv::Mat image);
 /// @return the original image masked with the heat diffusion
 cv::Mat computeDiffusion(cv::Mat image);
 
-/// @brief Reshapes the vector of bounding boxes in a matrix of bounding boxes
+/// @brief Reshapes the vector of bounding boxes in a matrix of Rects
 /// @param bbs list of bounding boxes
-/// @return vector for each image of the list of bounding boxes
+/// @return vector for each image of the list of Rects
 std::vector<std::vector<cv::Rect>> reshapeBB(std::vector<BoundingBox> bbs, int NUM_IMAGES = 15);
 
 //***Classification Functions***

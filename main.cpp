@@ -46,18 +46,19 @@ int main(int argc, char** argv)
     std::cout << "------\nStarting image processing pipeline" << std::endl;
     // BEGIN OF THE PROCESSING PIPELINE
 
+        //Take the raw bounding boxes
     std::vector<BoundingBox> processedData = loadBoundingBoxData(rel_path + "/ProcessedBoxes", false);
-    //Reorganize the vector into a vector of vectors of BoundingBoxes
+        //Reorganize the vector into a vector of vectors of Rects
     std::vector<std::vector<cv::Rect>> processedData2 = reshapeBB(processedData);
 
     
-    // for each image, keep also the relative fn during the loop
-    
+        // For each test image
     for (size_t k = 0; k < images.size(); k++) {
         //pick the fn of the image
          cv::String fn2 = fn[k];
          int num = extractNumber(fn2);
-         std::cout << num << std::endl;
+          
+         //clean the boxes
          std::cout << "Boxes before cleaning: " << processedData2[num-1].size() << std::endl;
          cleanRectangles(processedData2[num-1], images[k]);
          std::cout << "Boxes after cleaning: " << processedData2[num-1].size() << std::endl;
@@ -70,6 +71,7 @@ int main(int argc, char** argv)
 
         cv::imshow("Image", images[k]);
         cv::waitKey(0);
+
         //classify the boxes
         std::vector<int> labels_BB = classify(images[k], processedData2[num - 1]);
         //Write the boxes to a file
@@ -107,13 +109,11 @@ int main(int argc, char** argv)
 
 
 
-         //eliminate boxes inside the image to have a better field detection 
+         // Eliminate boxes inside the image to have a better field detection 
           //player_elimination(image_box, mask, seg_image);
           //color_quantization(image_box, clustered, centroid);
           cv::Mat segmentation = clustered.clone();
           //field_distinction(image_box, clustered, segmentation);
-
-
 
           //cv::Vec2f line;
           //bool val = line_refinement(image_box, line);
@@ -121,9 +121,7 @@ int main(int argc, char** argv)
           //    court_segmentation_refinement(segmentation, line);
           //}
 
-          //std::vector<int> labels = classify(images[k], processedData2[num - 1]);
-
-          //unifySegmentation(segmentation, seg_image, processedData2[num - 1], labels);
+          //unifySegmentation(segmentation, seg_image, processedData2[num - 1], labels_BB);
 
           //cv::Mat segmentation_bin = cv::Mat::zeros(segmentation.rows, segmentation.cols, CV_8UC1);
           //createSegmentationPNG(segmentation, segmentation_bin);
@@ -141,28 +139,23 @@ int main(int argc, char** argv)
 			// cv::rectangle(images[k], processedData2[num-1][i], cv::Scalar(0, 255, 0), 2);
 			// cv::putText(images[k], std::to_string(labels[i]), cv::Point(processedData2[num-1][i].x, processedData2[num-1][i].y), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
 		 //}
-
-
-   //      cv::imshow("Image", images[k]);
-		 //cv::waitKey(0);
     }
    
-   
 
-    
     // EVALUATION PIPELINE
     //std::cout << "------\nEvaluation Pipeline" << std::endl;
+        //// Bounding Box Evaluation
     //std::vector<BoundingBox> resultData = loadBoundingBoxData(rel_path + mask_path);
     //std::vector<BoundingBox> resultData_rev = loadBoundingBoxData(rel_path + mask_path, true, true);
     ////std::vector<BoundingBox> predData = loadBoundingBoxData(rel_path + complete);
     //float result_bb = processBoxPreds(resultData, resultData);
     //float result_bb_rev = processBoxPreds(resultData, resultData_rev);
 
-    ////AP for each image
+        ////AP for each image
     //singleImageAP(resultData, resultData_rev, resultData_rev, images.size());
 
 
-
+        //// Semantic Segmentation Evaluation
     //std::vector<cv::Mat> segmentationGOLD = loadSemanticSegmentationData(rel_path + mask_path);
     //std::vector<cv::Mat> segmentationGOLD_REV = loadSemanticSegmentationData(rel_path + mask_path, true);
     //std::vector<cv::Mat> segmentationPRED = loadSemanticSegmentationData(rel_path + complete);
@@ -175,7 +168,7 @@ int main(int argc, char** argv)
     //std::cout << "mAP: " << result_bb_rev << " " << result_bb;//std::max(result_bb_rev, result_bb_rev) << std::endl;
     //std::cout << "IoU: " << std::max(result_seg, result_seg_rev) << std::endl;
 
-    //Show results, uncomment to show
+        ////Show results, uncomment to show
     //showResults("D:/Download/Sport_scene_dataset/Images", "D:/Download/Sport_scene_dataset/Masks");
     
 }

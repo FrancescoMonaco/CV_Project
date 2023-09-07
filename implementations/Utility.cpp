@@ -2,7 +2,7 @@
 #include <fstream>
 // Utility.cpp : Francesco Pio Monaco
 
-//Constants for the utility functions
+//***Constants for the utility functions
 	//Multiplicators for canny and the heat diffusion
 const int canny_c = 9, alpha = 1; const double lambda = 1;
      //Colors for the segmentation
@@ -10,7 +10,7 @@ std::vector<cv::Vec3b> colors = { cv::Vec3b(0, 0, 255), cv::Vec3b(255, 0, 0) };
 	 //Threshold for the blackness of the rectangle
 const int BLACK_THRESH = 25;
 
-//Implementations
+//***Implementations
 
 void removeUniformRect(std::vector<cv::Rect>& rects, cv::Mat image, int threshold)
 {
@@ -39,13 +39,14 @@ void removeUniformRect(std::vector<cv::Rect>& rects, cv::Mat image, int threshol
 
 void mergeOverlapRect(std::vector<cv::Rect>& rects, int threshold)
 {
-    //for each rectangle, check if they overlap on the top or on the bottom, if above a certain threshold, merge them into a single rectangle that contains both
+    //for each rectangle, check if they overlap on the top or on the bottom, if above a certain threshold, 
+    // merge them into a single rectangle that contains both
     for (size_t i = 0; i < rects.size(); i++)
     {
         cv::Rect r = rects[i];
         for (size_t j = i + 1; j < rects.size(); j++)
         {
-                //check the area of the intersection if above a certain threshold, merge the rectangles
+                //check the area of the intersection, if it's above a certain threshold, merge the rectangles
             cv::Rect r2 = rects[j];
             cv::Rect intersection = r & r2;
             if (intersection.area() > threshold)
@@ -63,9 +64,13 @@ void mergeOverlapRect(std::vector<cv::Rect>& rects, int threshold)
 void cleanRectangles(std::vector<cv::Rect>& rects, cv::Mat image)
 {
     bool merge = true;
+    //If there are many rectangles merging them can be a problem
     if (rects.size() > 10)
 		merge = false;
+    //Compute the diffusion of the image
     cv::Mat mskd = computeDiffusion(image);
+
+    //Remove rectangles only if there are more than 3
     if (rects.size() > 3)
         removeUniformRect(rects, mskd, 10);
     if(merge)
@@ -77,6 +82,7 @@ cv::Mat computeDiffusion(cv::Mat image)
     cv::Mat test, edges;
     //Do a strong blur before canny
     cv::GaussianBlur(image, test, cv::Size(7, 7), 0.4, 0.4);
+
     //Compute the gradient magnitude of the image
     cv::Mat grad_x, grad_y;
     cv::Mat abs_grad_x, abs_grad_y, test_grad;
@@ -85,6 +91,7 @@ cv::Mat computeDiffusion(cv::Mat image)
     cv::convertScaleAbs(grad_x, abs_grad_x);
     cv::convertScaleAbs(grad_y, abs_grad_y);
     cv::addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, test_grad);
+
     //Compute the median of the gradient magnitude
     cv::Scalar mean, stddev;
     cv::meanStdDev(test_grad, mean, stddev);
@@ -101,7 +108,7 @@ cv::Mat computeDiffusion(cv::Mat image)
 
         for (int y = 1; y < diffusedImage.rows - 1; ++y) {
             for (int x = 1; x < diffusedImage.cols - 1; ++x) {
-                // Apply heat diffusion equation
+                // Apply diffusion equation
                 double newValue = diffusedImage.at<uchar>(y, x) + alpha * (
                     diffusedImage.at<uchar>(y - 1, x) + diffusedImage.at<uchar>(y + 1, x) +
                     diffusedImage.at<uchar>(y, x - 1) + diffusedImage.at<uchar>(y, x + 1) -
@@ -131,12 +138,14 @@ cv::Mat computeDiffusion(cv::Mat image)
 
 std::vector<std::vector<cv::Rect>> reshapeBB(std::vector<BoundingBox> bbs, int NUM_IMAGES)
 {
-    //Initialize to NUM_IMAGES empty vectors
+    //Initialize NUM_IMAGES empty vectors
     std::vector<std::vector<cv::Rect>> processedData2;
 
+    //For each image retrieve the Rects and put them in the right vector
     for (int i = 0; i < NUM_IMAGES; i++)
     {
 		std::vector<cv::Rect> processedData;
+
         for (int j = 0; j < bbs.size(); j++)
         {
             if (bbs[j].fileNum == i+1)
@@ -192,6 +201,7 @@ std::vector<int> classify(cv::Mat& image, std::vector<cv::Rect> rects) {
         const float* histRange = { range };
         bool uniform = true;
         bool accumulate = false;
+
         // Compute histogram for each channel and merge them
         std::vector<cv::Mat> channelHist;
         for (int i = 0; i < channels.size(); i++) {
