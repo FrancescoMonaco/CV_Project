@@ -7,127 +7,69 @@
 const int canny_c = 9, alpha = 1; const double lambda = 1;
      //Colors for the segmentation
 std::vector<cv::Vec3b> colors = { cv::Vec3b(0, 0, 255), cv::Vec3b(255, 0, 0) };
-//Implementations
+	 //Threshold for the blackness of the rectangle
+const int BLACK_THRESH = 25;
 
+//Implementations
 
 void removeUniformRect(std::vector<cv::Rect>& rects, cv::Mat image, int threshold)
 {
-    //compute canny of the whole image
-cv::Mat canny;
-	cv::Canny(image, canny, 100, 200);
-
-    //vector of the number of pixels in the rectangle that are edges
-    std::vector<int> count(rects.size(), 0);
+    //for each rectangle, remove those whose heigth is smaller or equal than two times the width
     for (size_t i = 0; i < rects.size(); i++)
     {
-        resizeRect(rects[i], image);
-        cv::Rect r = rects[i];
-        //count the number of pixels in the rectangle that are edges and compute the mean
-        int counting = 0;
-
-        for (int y = r.y; y < r.y + r.height; y++)
-		        {
-			        for (int x = r.x; x < r.x + r.width; x++)
-			        {
-				        if (canny.at<uchar>(y, x) == 255)
-				        {
-					        counting++;
-				        }
-			        }
-		        }
-        count[i] = counting;
-     }
-    //find the mean of the number of pixels that are edges
-int mean = 0;
-	for (size_t i = 0; i < count.size(); i++)
-	{
-		mean += count[i];
-	}
-	mean /= count.size();
-	//remove the rectangles that have a number of pixels that are edges that is less than the mean
-	for (size_t i = 0; i < count.size(); i++)
-	{
-		if (count[i] < mean-150)
-		{
+		cv::Rect r = rects[i];
+        if (1.7* r.height <=  r.width)
+        {
 			rects.erase(rects.begin() + i);
-            //erase also the corresponding count
-count.erase(count.begin() + i);
 			i--;
 		}
-	}
 
+        //check how black is the rectangle, if it is too black, remove it
+        cv::Mat roi = image(r);
+        cv::Scalar mean, stddev;
+        cv::meanStdDev(roi, mean, stddev);
+        double mean_val = mean[0];
+        if (mean_val < BLACK_THRESH)
+        {
+            rects.erase(rects.begin() + i);
+            i--;
+        }
+	}
 }
 
 void mergeOverlapRect(std::vector<cv::Rect>& rects, int threshold)
 {
-    //if two rectangles overlap on the y axis, merge them into a single rectangle that contains both
+    //for each rectangle, check if they overlap on the top or on the bottom, if above a certain threshold, merge them into a single rectangle that contains both
     for (size_t i = 0; i < rects.size(); i++)
     {
+        cv::Rect r = rects[i];
         for (size_t j = i + 1; j < rects.size(); j++)
         {
-			cv::Rect r1 = rects[i];
-			cv::Rect r2 = rects[j];
-            if (r1.y < r2.y)
+                //check the area of the intersection if above a certain threshold, merge the rectangles
+            cv::Rect r2 = rects[j];
+            cv::Rect intersection = r & r2;
+            if (intersection.area() > threshold)
             {
-                if (r1.y + r1.height > r2.y)
-                {
-                    if (r1.x < r2.x)
-                    {
-                        if (r1.x + r1.width > r2.x)
-                        {
-							//r1 contains r2
-							rects.erase(rects.begin() + j);
-							j--;
-						}
-					}
-                    else
-                    {
-                        if (r2.x + r2.width > r1.x)
-                        {
-							//r2 contains r1
-							rects.erase(rects.begin() + i);
-							i--;
-							break;
-						}
-					}
-				}
+				cv::Rect newRect = r | r2;
+				rects[i] = newRect;
+				rects.erase(rects.begin() + j);
+				j--;
 			}
-            else
-            {
-                if (r2.y + r2.height > r1.y)
-                {
-                    if (r1.x < r2.x)
-                    {
-                        if (r1.x + r1.width > r2.x)
-                        {
-							//r1 contains r2
-							rects.erase(rects.begin() + j);
-							j--;
-						}
-					}
-                    else
-                    {
-                        if (r2.x + r2.width > r1.x)
-                        {
-							//r2 contains r1
-							rects.erase(rects.begin() + i);
-							i--;
-							break;
-						}
-					}
-				}
-			}
-		}
-	}
+        }
+    }
+    
 }
 
 void cleanRectangles(std::vector<cv::Rect>& rects, cv::Mat image)
 {
-    
+    bool merge = true;
+    if (rects.size() > 10)
+		merge = false;
     cv::Mat mskd = computeDiffusion(image);
-    removeUniformRect(rects, image, 15);
-    //removeFlatRect(rects);
-    //mergeOverlapRect(rects, 5);
+    if (rects.size() > 3)
+        removeUniformRect(rects, mskd, 10);
+    if(merge)
+        mergeOverlapRect(rects, 5);
 }
 
 cv::Mat computeDiffusion(cv::Mat image)
@@ -208,20 +150,6 @@ std::vector<std::vector<cv::Rect>> reshapeBB(std::vector<BoundingBox> bbs, int N
 	}
 
     return processedData2;
-}
-
-void removeFlatRect(std::vector<cv::Rect>& rects)
-{
-    //for each rectangle, check if it is flat and remove it if it is
-    for (size_t i = 0; i < rects.size(); i++)
-    {
-		cv::Rect r = rects[i];
-        if (r.width > 2.5 * r.height)
-        {
-			rects.erase(rects.begin() + i);
-			i--;
-		}
-	}
 }
 
 void resizeRect(cv::Rect& rect, cv::Mat image) {

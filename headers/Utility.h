@@ -12,10 +12,6 @@
 /// @param threshold cutoff value for the color variation
 void removeUniformRect(std::vector<cv::Rect>& rects, cv::Mat image, int threshold = 10);
 
-/// @brief Removes the rectangles where one of the sides is too small
-/// @param rects 
-void removeFlatRect(std::vector<cv::Rect>& rects);
-
 /// @brief Resizes the rectangle to the size of the image
 void resizeRect(cv::Rect& r, cv::Mat image);
 
