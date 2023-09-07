@@ -70,6 +70,10 @@ int main(int argc, char** argv)
 
         cv::imshow("Image", images[k]);
         cv::waitKey(0);
+        //classify the boxes
+        std::vector<int> labels_BB = classify(images[k], processedData2[num - 1]);
+        //Write the boxes to a file
+        writeBB(images[k], processedData2[num-1], labels_BB, rel_path + complete + "/im" + std::to_string(num) + "_bb.txt");
 
          std::string boxes = rel_path + "Images/im" + std::to_string(num);
 

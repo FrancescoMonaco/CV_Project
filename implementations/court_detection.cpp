@@ -47,9 +47,6 @@ void merge_clusters(cv::Mat& labels, cv::Mat& centers, float merge_threshold) {
 
 void color_quantization(cv::Mat image, cv::Mat& img_out, cv::Mat& centers) {
 
-
-
-
 	int numClusters = 3; // Number of desired colors after quantization
 	cv::Mat labels;
 	cv::TermCriteria criteria = cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 10, 0.1);
@@ -129,10 +126,6 @@ void color_quantization(cv::Mat image, cv::Mat& img_out, cv::Mat& centers) {
 	}
 
 	img_out = clustered.clone();
-	cv::imshow("Quantization", img_out);
-	//std::vector<double> distances;
-	//distances = maximum_distance(image, clustered, centers);
-
 
 	return;
 }
@@ -366,5 +359,4 @@ void court_segmentation_refinement(cv::Mat& segmentation, cv::Vec2f& line) {
 			}
 		}
 	}
-	cv::imshow("Refined", segmentation);
 }
