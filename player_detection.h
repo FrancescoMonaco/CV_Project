@@ -18,4 +18,5 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 bool sortbysec(const std::pair<int, cv::Vec3b>& a,
 	const std::pair<int, cv::Vec3b>& b);
 
+void remove_components(cv::Mat& mask);
 
