@@ -166,8 +166,7 @@ void close_lines(cv::Mat& edge_image) {
 
 	cv::Mat img_out;
 	morphologyEx(edge_image, img_out, cv::MORPH_GRADIENT, element, cv::Point(-1, -1), 2);
-	//thin some edges
-
+	
 	
 	edge_image = img_out.clone();
 }
@@ -628,9 +627,9 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 	
 	double more = 0.0;
 
-	if (n_nonzeros / tot > 0.7) {
+	if (n_nonzeros / tot > 0.75) {
 		
-		if (x + w + 10 < clustering.cols) {
+		if (x + w + 20 < clustering.cols) {
 
 			w += 20;
 
@@ -641,7 +640,7 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 			n_zeros =n_zeros+ (20*mask.rows);
 		}
 
-		if (x  - 10 > 0) {
+		if (x  - 20 > 0) {
 			x = x - 20;
 			cv::Mat paddedImage(mask.rows, mask.cols + 20, mask.type(), cv::Vec3b(0, 0, 0));
 			mask.copyTo(paddedImage(cv::Rect(20, 0, mask.cols, mask.rows)));
@@ -753,9 +752,9 @@ for (int i = y; i < y + h; i++) {
 
 	}
 	
-	cv::imshow("final", box_superimpose);
+	/*cv::imshow("final", box_superimpose);
 	cv::waitKey(0);
-	
+	*/
 	cv::Mat final_seg, inversion;
 	cv::inRange(box_superimpose, cv::Vec3b(0, 0, 0), cv::Vec3b(0, 0, 0), inversion);
 	
@@ -764,7 +763,7 @@ for (int i = y; i < y + h; i++) {
 	cv::waitKey(0);
 
 	mask = final_seg.clone();
-
+	remove_components(mask);
 }
 void remove_components(cv::Mat& mask) {
 
@@ -779,25 +778,52 @@ void remove_components(cv::Mat& mask) {
 	for (int y = 0; y < labeledImage.rows; y++) {
 		for (int x = 0; x < labeledImage.cols; x++) {
 			int label = labeledImage.at<int>(y, x);
+			
 			if (label > 0) {
 				regionPixelCounts[label]++;
 			}
-		}
-	}
-
-	auto maxIterator = std::max_element(regionPixelCounts.begin(), regionPixelCounts.end());
-
-	// Calculate the position of the maximum element
-	int maxPosition = std::distance(regionPixelCounts.begin(), maxIterator);
-
-
-	for (int i = 1; i < numLabels; i++) { // Start from 1 to skip background label
-		
-		
-		if (i!=maxPosition) {
-
 
 		}
 	}
 	
+	//
+	//std::vector<cv::Vec3b> colors(numLabels);
+	//for (int label = 0; label < numLabels; ++label) {
+	//	colors[label] = cv::Vec3b(rand() % 256, rand() % 256, rand() % 256);
+	//}
+
+
+	//// Create a color image from the labeled image
+	//cv::Mat coloredLabels(labeledImage.size(), CV_8UC3);
+	//for (int i = 0; i < labeledImage.rows; ++i) {
+	//	for (int j = 0; j < labeledImage.cols; ++j) {
+	//		int label = labeledImage.at<int>(i, j);
+	//		coloredLabels.at<cv::Vec3b>(i, j) = colors[label];
+	//	}
+	//}
+	double tot=	mask.cols* mask.rows;
+
+	double medium = tot/regionPixelCounts.size();
+	
+	//remove all the non connected componets
+	for (int i = 0; i < mask.rows; i++) {
+		for (int j = 0; j < mask.cols; j++) {
+			int label = labeledImage.at<int>(i, j);
+			//remove condition
+
+			if (regionPixelCounts[label]<medium-1) {
+				//std::cout<< regionPixelCounts[label] <<std::endl;
+				mask.at<uchar>(i, j) = 0;
+
+			}
+			else {
+				continue;
+			}
+
+		}
+	}
+
+	cv::imshow("final mask", mask);
+	cv::waitKey(0);
+
 }
