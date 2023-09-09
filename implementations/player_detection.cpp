@@ -83,8 +83,8 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 			//i use this function to color inside the figures
 			fill_segments(edges);
 
-			cv::imshow(" ", edges);
-			cv::waitKey(0);
+			//cv::imshow(" ", edges);
+			//cv::waitKey(0);
 
 
 

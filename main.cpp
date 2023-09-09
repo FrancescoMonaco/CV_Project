@@ -54,6 +54,7 @@ int main(int argc, char** argv)
     
         // For each test image
     for (size_t k = 0; k < images.size(); k++) {
+
         //pick the fn of the image
          cv::String fn2 = fn[k];
          int num = extractNumber(fn2);
@@ -112,9 +113,10 @@ int main(int argc, char** argv)
          // Eliminate boxes inside the image to have a better field detection 
           //player_elimination(image_box, mask, seg_image);
           //color_quantization(image_box, clustered, centroid);
-          cv::Mat segmentation = clustered.clone();
+          //cv::Mat segmentation = clustered.clone();
           //field_distinction(image_box, clustered, segmentation);
-
+          //cv::imshow("Image", segmentation);
+          //cv::waitKey(0);
           //cv::Vec2f line;
           //bool val = line_refinement(image_box, line);
           //if (val) {

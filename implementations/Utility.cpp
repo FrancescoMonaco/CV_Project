@@ -65,7 +65,7 @@ void cleanRectangles(std::vector<cv::Rect>& rects, cv::Mat image)
 {
     bool merge = true;
     //If there are many rectangles merging them can be a problem
-    if (rects.size() > 10)
+    if (rects.size() >= 11 || (rects.size() > 2 && rects.size() < 6))
 		merge = false;
     //Compute the diffusion of the image
     cv::Mat mskd = computeDiffusion(image);
