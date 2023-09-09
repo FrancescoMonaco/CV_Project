@@ -65,13 +65,13 @@ int main(int argc, char** argv)
          std::cout << "Boxes after cleaning: " << processedData2[num-1].size() << std::endl;
 
          //Put the boxes on the image and show it
-        for (size_t i = 0; i < processedData2[num-1].size(); i++) {
-            //check
-			 cv::rectangle(images[k], processedData2[num-1][i], cv::Scalar(0, 255, 0), 2);
-		 }
+   //     for (size_t i = 0; i < processedData2[num-1].size(); i++) {
+   //         //check
+			// cv::rectangle(images[k], processedData2[num-1][i], cv::Scalar(0, 255, 0), 2);
+		 //}
 
-        cv::imshow("Image", images[k]);
-        cv::waitKey(0);
+   //     cv::imshow("Image", images[k]);
+   //     cv::waitKey(0);
 
         //classify the boxes
         std::vector<int> labels_BB = classify(images[k], processedData2[num - 1]);
@@ -102,7 +102,7 @@ int main(int argc, char** argv)
 
 
          cv::Mat seg_image(image_box.size(), CV_8UC1);
-         //player_segmentation(image_box, seg_image, boxes);
+         player_segmentation(image_box, seg_image, boxes);
 
          //cv::imshow("Image", seg_image);
 
@@ -111,7 +111,7 @@ int main(int argc, char** argv)
 
 
          // Eliminate boxes inside the image to have a better field detection 
-          //player_elimination(image_box, mask, seg_image);
+          ///player_elimination(image_box, mask, seg_image);
           //color_quantization(image_box, clustered, centroid);
           //cv::Mat segmentation = clustered.clone();
           //field_distinction(image_box, clustered, segmentation);
