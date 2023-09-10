@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 2.8)
 project(Project_CV)
 
-# Set the C++ standard to C++17
+# Set the C++ standard to C++17, needed for std::filesystem
 set(CMAKE_CXX_STANDARD 17)
 
 # Find OpenCV package
+	# SET the path to OpenCV ONLY IF NEEDED
 #set(OpenCV_DIR D:/Download/opencv/build)
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
