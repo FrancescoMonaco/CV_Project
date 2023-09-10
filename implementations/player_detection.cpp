@@ -403,7 +403,7 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 		cv::Point starte = starters_up[i];
 		cv::Point end = terminators_up[i];
 
-		if (end.x - starte.x > edges.rows/5) {
+		if (end.x - starte.x < edges.rows / 10 || end.x - starte.x > edges.rows/5) {
 
 		}
 		else {
@@ -433,7 +433,7 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 		cv::Point starte = starters_down[i];
 		cv::Point end = terminators_down[i];
 
-		if (end.x - starte.x < edges.rows/10 && end.x - starte.x> edges.rows/5) {
+		if (end.x - starte.x < edges.rows/15 || end.x - starte.x> edges.rows/5) {
 			continue;
 		}
 		else {
@@ -508,7 +508,7 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 		cv::Point starte = starters_up[i];
 		cv::Point end = terminators_up[i];
 
-		if ((end.y - starte.y) < edges.rows/15 || (end.y - starte.y) > edges.rows/10) {
+		if ((end.y - starte.y) < edges.rows/10 || (end.y - starte.y) > edges.rows/2) {
 
 		}
 		else {
@@ -538,7 +538,7 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 			cv::Point starte = starters_down[i];
 			cv::Point end = terminators_down[i];
 	
-			if (end.y - starte.y > edges.cols/5) {
+			if (end.y - starte.y < edges.cols/20 || end.y - starte.y > edges.cols/5) {
 	
 			}
 			else {
