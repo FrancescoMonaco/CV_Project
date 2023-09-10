@@ -8,7 +8,7 @@ const int canny_c = 9, alpha = 1; const double lambda = 1;
      //Colors for the segmentation
 std::vector<cv::Vec3b> colors = { cv::Vec3b(0, 0, 255), cv::Vec3b(255, 0, 0) };
 	 //Threshold for the blackness of the rectangle
-const int BLACK_THRESH = 25;
+const int BLACK_THRESH = 35;
 
 //***Implementations
 
@@ -64,7 +64,7 @@ void mergeOverlapRect(std::vector<cv::Rect>& rects, int threshold)
 void cleanRectangles(std::vector<cv::Rect>& rects, cv::Mat image)
 {
     bool merge = true;
-    //If there are many or too few rectangles merging them can be a problem
+    //If there are many or too few rectangles merging with the same threshold can be a problem
     if (rects.size() >= 11 || (rects.size() > 2 && rects.size() < 6))
 		merge = false;
 
@@ -75,8 +75,11 @@ void cleanRectangles(std::vector<cv::Rect>& rects, cv::Mat image)
     if (rects.size() > 3)
         removeUniformRect(rects, mskd, 10);
 
+    // Merge the rectangles
     if(merge)
         mergeOverlapRect(rects, 5);
+    if (!merge)
+        mergeOverlapRect(rects, 4050);
 }
 
 cv::Mat computeDiffusion(cv::Mat image)
