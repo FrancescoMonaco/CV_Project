@@ -64,15 +64,17 @@ void mergeOverlapRect(std::vector<cv::Rect>& rects, int threshold)
 void cleanRectangles(std::vector<cv::Rect>& rects, cv::Mat image)
 {
     bool merge = true;
-    //If there are many rectangles merging them can be a problem
+    //If there are many or too few rectangles merging them can be a problem
     if (rects.size() >= 11 || (rects.size() > 2 && rects.size() < 6))
 		merge = false;
+
     //Compute the diffusion of the image
     cv::Mat mskd = computeDiffusion(image);
 
     //Remove rectangles only if there are more than 3
     if (rects.size() > 3)
         removeUniformRect(rects, mskd, 10);
+
     if(merge)
         mergeOverlapRect(rects, 5);
 }

@@ -343,51 +343,65 @@ void create_mask(cv::Mat image, cv::Mat& mask, std::string str) {
 
 
 void create_lines(cv::Mat edges, cv::Mat& output_edges) {
-
-	std::vector<cv::Point> starters;
-	std::vector<cv::Point> terminators;
+	// Vectors to store the starting and ending points of the lines
+	std::vector<cv::Point> starters_up, starters_down;
+	std::vector<cv::Point> terminators_up, terminators_down;
 
 
 	cv::imshow("first edges", edges);
-	//cv::waitKey(0);*/
 
-	bool start = false;
+	bool start_up = false, start_down = false;
 
-	starters.clear();
-	terminators.clear();
+	starters_up.clear();
+	terminators_up.clear();
+	starters_down.clear();
+	terminators_down.clear();
 
-	for (int j = 0; j < edges.cols; j++) {
+	int n_rows = edges.rows, col = edges.cols;
 
-		uchar pixel = edges.at<uchar>(0, j);
+	//--------------------- UP-DOWN CLOSURE ------------------------------
+	for (int j = 0; j < edges.cols; j++) { //in the same cycle we find the starting and ending point of the lines up and down
+		// UP check
+		uchar pixel_up = edges.at<uchar>(0, j);
 
-		if (!start && pixel == 255 && j + 1 != edges.cols && edges.at<uchar>(0, j + 1) != 255) {
+		if (!start_up && pixel_up == 255 && j + 1 != edges.cols && edges.at<uchar>(0, j + 1) != 255) {
 
-			starters.push_back(cv::Point(j, 0));
-			start = true;
+			starters_up.push_back(cv::Point(j, 0));
+			start_up = true;
 		}
 
-		else if (start && pixel == 255) {
+		else if (start_up && pixel_up == 255) {
 
-			start = false;
-			terminators.push_back(cv::Point(j, 0));
-			//std::cout << "found\n";
+			start_up = false;
+			terminators_up.push_back(cv::Point(j, 0));
+		}
+		// DOWN check
+		uchar pixel_down = edges.at<uchar>(n_rows - 1, j);
+
+		if (!start_down && pixel_down == 255 && j + 1 != edges.cols && edges.at<uchar>(n_rows - 1, j + 1) != 255) {
+
+			starters_down.push_back(cv::Point(j, n_rows - 1));
+			start_down = true;
+
+		}
+
+		else if (start_down && pixel_down == 255) {
+			start_down = false;
+			terminators_down.push_back(cv::Point(j, n_rows - 1));
 		}
 
 	}
-
-	if (start) {
-		starters.pop_back();
+	// UP closure
+	if (start_up) {
+		starters_up.pop_back();
 
 	}
 
+	for (int i = 0; i < starters_up.size(); i++) {
 
-	//create the line
-	for (int i = 0; i < starters.size(); i++) {
-
-		//	std::cout<< starters[i] <<std::endl;
-			//take stating and ending point
-		cv::Point starte = starters[i];
-		cv::Point end = terminators[i];
+			//take starting and ending point
+		cv::Point starte = starters_up[i];
+		cv::Point end = terminators_up[i];
 
 		if (end.x - starte.x > edges.rows/5) {
 
@@ -406,49 +420,18 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 
 	}
 
-
-
-	//---------------
-
-	start = false;
-
-	starters.clear();
-	terminators.clear();
-
-	int n_rows = edges.rows;
-
-	for (int j = 0; j < edges.cols; j++) {
-
-		uchar pixel = edges.at<uchar>(n_rows - 1, j);
-
-		if (!start && pixel == 255 && j + 1 != edges.cols && edges.at<uchar>(n_rows - 1, j + 1) != 255) {
-
-			starters.push_back(cv::Point(j, n_rows - 1));
-			start = true;
-
-		}
-
-		else if (start && pixel == 255) {
-			start = false;
-			terminators.push_back(cv::Point(j, n_rows - 1));
-			//std::cout << "found\n";
-		}
-
-	}
-
-	if (start) {
-		starters.pop_back();
+	// DOWN closure
+	if (start_down) {
+		starters_down.pop_back();
 
 	}
 
 
+	for (int i = 0; i < starters_down.size(); i++) {
 
-	//create the line
-	for (int i = 0; i < starters.size(); i++) {
-
-		//take stating and ending point
-		cv::Point starte = starters[i];
-		cv::Point end = terminators[i];
+		//take starting and ending point
+		cv::Point starte = starters_down[i];
+		cv::Point end = terminators_down[i];
 
 		if (end.x - starte.x < edges.rows/10 && end.x - starte.x> edges.rows/5) {
 			continue;
@@ -466,65 +449,71 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 		}
 
 	}
+	//--------------------- LATERAL CLOSURE ------------------------------
+
+	start_up = start_down = false;
+
+	starters_up.clear();
+	terminators_up.clear();
+	starters_down.clear();
+	terminators_down.clear();
 
 
+	for (int j = 0; j < edges.rows; j++) { //we use the same cycle for left and right
+		// LEFT check
+		uchar pixel_up = edges.at<uchar>(j, 0);
 
+		if (!start_up && pixel_up == 255 && j + 1 != edges.rows && edges.at<uchar>(j + 1, 0) != 255) {
 
-
-
-	//---------------------
-
-	start = false;
-
-	starters.clear();
-	terminators.clear();
-
-
-
-	for (int j = 0; j < edges.rows; j++) {
-
-		uchar pixel = edges.at<uchar>(j, 0);
-
-		if (!start && pixel == 255 && j + 1 != edges.rows && edges.at<uchar>(j + 1, 0) != 255) {
-
-			starters.push_back(cv::Point(0, j));
-			start = true;
+			starters_up.push_back(cv::Point(0, j));
+			start_up = true;
 
 		}
 
-		else if (start && pixel == 255) {
+		else if (start_up && pixel_up == 255) {
 
-			start = false;
-			terminators.push_back(cv::Point(0, j));
+			start_up = false;
+			terminators_up.push_back(cv::Point(0, j));
+			//std::cout << "found\n";
+		}
+
+		// RIGHT check
+		uchar pixel_down = edges.at<uchar>(j, col - 1);
+
+		if (!start_down && pixel_down == 255 && j + 1 != edges.rows && edges.at<uchar>(j + 1, col - 1) != 255) {
+
+			starters_down.push_back(cv::Point(col - 1, j));
+			start_down = true;
+
+		}
+
+		else if (start_down && pixel_down == 255) {
+
+			start_down = false;
+			terminators_down.push_back(cv::Point(col - 1, j));
 			//std::cout << "found\n";
 		}
 
 	}
 
-	if (start) {
-		starters.pop_back();
+	// LEFT closure
+	if (start_up) {
+		starters_up.pop_back();
 
 	}
 
+	for (int i = 0; i < starters_up.size(); i++) {
 
 
-	//std::cout << starters;
+		cv::Point starte = starters_up[i];
+		cv::Point end = terminators_up[i];
 
-	//create the line
-	for (int i = 0; i < starters.size(); i++) {
-
-
-		cv::Point starte = starters[i];
-		cv::Point end = terminators[i];
-
-		//std::cout << end.y - starte.y<<std::endl;
 		if ((end.y - starte.y) < edges.rows/15 || (end.y - starte.y) > edges.rows/10) {
 
 		}
 		else {
 			for (int j = starte.y; j < end.y; j++) {
 
-				//std::cout << end.y - starte.y << std::endl;
 				edges.at<uchar>(j, 0) = 255;
 				edges.at<uchar>(j, 1) = 255;
 				edges.at<uchar>(j, 2) = 255;
@@ -536,59 +525,23 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 
 	}
 
+	// RIGHT closure
+	if (start_down) {
+			starters_down.pop_back();
 	
-	//-------------------------------
-	
-	
-		/**/
-		start = false;
-	
-		starters.clear();
-		terminators.clear();
-	
-		int col = edges.cols;
-	
-		for (int j = 0; j < edges.rows; j++) {
-	
-			uchar pixel = edges.at<uchar>(j, col-1);
-	
-			if (!start && pixel == 255 && j + 1 != edges.rows && edges.at<uchar>(j + 1, col-1) != 255) {
-	
-				starters.push_back(cv::Point(col-1, j));
-				start = true;
-	
-			}
-	
-			else if (start && pixel == 255) {
-	
-				start = false;
-				terminators.push_back(cv::Point(col-1, j));
-				//std::cout << "found\n";
-			}
-	
-		}
-	
-		if (start) {
-			starters.pop_back();
-	
-		}
+	}
+
+
+	for (int i = 0; i < starters_down.size(); i++) {
 	
 	
-	
-		//std::cout << starters;
-	
-		//create the line
-		for (int i = 0; i < starters.size(); i++) {
-	
-	
-			cv::Point starte = starters[i];
-			cv::Point end = terminators[i];
+			cv::Point starte = starters_down[i];
+			cv::Point end = terminators_down[i];
 	
 			if (end.y - starte.y > edges.cols/5) {
 	
 			}
 			else {
-				std::cout << "In th else";
 				for (int j = starte.y; j < end.y; j++) {
 	
 					edges.at<uchar>(j, col-1) = 255;
@@ -605,9 +558,6 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 	output_edges = edges.clone();
 	cv::imshow("new edges", edges);
 	cv::waitKey(0);
-
-
-
 }
 
 bool sortbysec(const std::pair<int, cv::Vec3b>& a,

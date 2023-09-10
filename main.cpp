@@ -93,7 +93,7 @@ int main(int argc, char** argv)
          boxes = boxes + "_bb.txt";
 
          //Strings to save the files
-         boxes = rel_path + "/Masks/im" + std::to_string(num);
+         boxes = rel_path + "/Predictions/im" + std::to_string(num);
          boxes = boxes + "_bb.txt";
          std::string seg_bin_file = rel_path + complete + "/im" + std::to_string(num) + "_bin.png";
          std::string seg_color_file = rel_path + complete + "/im" + std::to_string(num) + "_color.png";
