@@ -403,7 +403,7 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 		cv::Point starte = starters_up[i];
 		cv::Point end = terminators_up[i];
 
-		if (end.x - starte.x > edges.rows/5) {
+		if (end.x - starte.x > edges.rows/4) {
 
 		}
 		else {
@@ -508,7 +508,7 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 		cv::Point starte = starters_up[i];
 		cv::Point end = terminators_up[i];
 
-		if ((end.y - starte.y) > edges.rows/5) {
+		if ((end.y - starte.y) > edges.rows/4) {
 
 		}
 		else {
