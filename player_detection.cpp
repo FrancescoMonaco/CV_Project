@@ -600,11 +600,14 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 			mask.copyTo(paddedImage(cv::Rect(static_cast<int>(num), 0, mask.cols, mask.rows)));
 			mask = paddedImage.clone();
 			//more = -0.1;
+			w += num;
 			n_zeros = n_zeros + (static_cast<int>(num) * mask.rows);
 		}
 
 	}
 
+	cv::imshow("padded image", mask);
+	cv::waitKey(0);
 	std::cout <<x+w <<std::endl;
 	cv::Mat box_superimpose(mask.size(), CV_8UC3);
 	cv::Mat box(mask.size(), CV_8UC3);
