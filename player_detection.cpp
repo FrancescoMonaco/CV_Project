@@ -572,6 +572,7 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 	//number of black pixels
 	double n_zeros = tot - n_nonzeros;
 	
+	//not used actually
 	double more = 0.0;
 
 	if (n_nonzeros / tot > 0.75) {
@@ -606,9 +607,6 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 
 	}
 
-	cv::imshow("padded image", mask);
-	cv::waitKey(0);
-	std::cout <<x+w <<std::endl;
 	cv::Mat box_superimpose(mask.size(), CV_8UC3);
 	cv::Mat box(mask.size(), CV_8UC3);
 	cv::Mat reverse_box(mask.size(), CV_8UC3);
@@ -641,8 +639,8 @@ for (int i = y; i < y + h; i++) {
 	std::vector<std::pair<int, cv::Vec3b>> combinedVector;
 
 
-	cv::imshow(" ", reverse_box);
-	cv::waitKey(0);
+	/*cv::imshow(" ", reverse_box);
+	cv::waitKey(0);*/
 
 	//find all the color outside the shape of the mask
 	for (int i = 0; i < mask.rows; i++) {
@@ -674,7 +672,7 @@ for (int i = y; i < y + h; i++) {
 		}
 	}
 
-	std::cout << "new image\n";
+	//std::cout << "new image\n";
 	double num_labels = colors.size();
 	std::sort(combinedVector.begin(), combinedVector.end(), sortbysec);
 	//i take only the pixel who are the most out 
@@ -688,10 +686,7 @@ for (int i = y; i < y + h; i++) {
 		
 		//skip
 		if (fr <= tr) {
-			std::cout << num_labels << std::endl;
-			std::cout<<fr<<std::endl;
-			std::cout<<tr<<std::endl;
-			continue;
+				continue;
 		}
 		else {
 			cv::Vec3b color = combinedVector[z].second;
@@ -722,8 +717,14 @@ for (int i = y; i < y + h; i++) {
 	cv::imshow("", final_seg);
 	cv::waitKey(0);
 
-	mask = final_seg.clone();
-	remove_components(mask);
+	//remove the non connected components
+	remove_components(final_seg);
+
+	//fix the box if it was exapanded 
+	cv::Rect roi(box_parameters[0] - x, 0, box_parameters[2], mask.rows);
+	cv::Mat originalImage = final_seg(roi);
+	cv::imshow("final seg", originalImage);
+	cv::waitKey(0);
 }
 
 void remove_components(cv::Mat& mask) {
