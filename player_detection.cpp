@@ -1,8 +1,4 @@
 #include "player_detection.h"
-#include <cmath>
-#include <Eigen/Eigenvalues>
-#include <Eigen/Sparse>
-#include <opencv2/core/eigen.hpp>
 
 void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 
@@ -232,21 +228,21 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 
 	cv::Mat lbpImage(image.size(), CV_8U, cv::Scalar(0));
 	//calculate local binary pattern
-	calculateLBP(image,lbpImage,4,6);
+	calculateLBP(image,lbpImage,3,5);
 
 	//calculate first derivative to enhance contours
-	
-	cv::Mat edges_prewitt_horizontal;
-	cv::Sobel(image,edges_prewitt_horizontal, CV_32F, 1, 0, 3);
-	cv::Mat edges_prewitt_vertical;
-	cv::Sobel(image, edges_prewitt_vertical, CV_32F, 1, 0, 3);
-	// Compute the magnitude of the gradient
-	cv::Mat gradientMagnitude;
-	cv::magnitude(edges_prewitt_horizontal, edges_prewitt_vertical, gradientMagnitude);
+	//
+	//cv::Mat edges_prewitt_horizontal;
+	//cv::Sobel(image,edges_prewitt_horizontal, CV_32F, 1, 0, 3);
+	//cv::Mat edges_prewitt_vertical;
+	//cv::Sobel(image, edges_prewitt_vertical, CV_32F, 1, 0, 3);
+	//// Compute the magnitude of the gradient
+	//cv::Mat gradientMagnitude;
+	//cv::magnitude(edges_prewitt_horizontal, edges_prewitt_vertical, gradientMagnitude);
 
-	// Convert the gradient magnitude to an 8-bit image for visualization
-	cv::Mat gradientMagnitude8U;
-	gradientMagnitude.convertTo(gradientMagnitude8U, CV_8U);
+	//// Convert the gradient magnitude to an 8-bit image for visualization
+	//cv::Mat gradientMagnitude8U;
+	//gradientMagnitude.convertTo(gradientMagnitude8U, CV_8U);
 
 	// Display the gradient magnitude
 	/*cv::imshow("Gradient Magnitude", gradientMagnitude8U);
@@ -283,7 +279,7 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 	cv::normalize(flattened_data, flattened_data, 0, 1, cv::NORM_MINMAX);
 
 	//cv::Mat flat = image_box.reshape(1, image_box.cols * image_box.rows);
-	cv::kmeans(flattened_data, numClusters, labels, criteria, 5, cv::KMEANS_PP_CENTERS, centers);
+	cv::kmeans(flattened_data, numClusters, labels, criteria, 50, cv::KMEANS_PP_CENTERS, centers);
 
 	// Define replacement colors
 	cv::Vec3b colors[15];
@@ -335,48 +331,7 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 	cv::imshow("clustering", cluster);
 	cv::waitKey(0);
 
-
-
-
-
 }
-void create_mask(cv::Mat image, cv::Mat& mask, std::string str) {
-
-	std::ifstream file(str);
-
-
-	if (file.is_open()) {
-
-		std::string line;
-
-		//take the string with the position of bounding box
-		while (std::getline(file, line)) {
-			int x, y, w, h;
-
-			std::istringstream iss(line);
-
-			iss >> x >> y >> w >> h;
-
-
-			for (int j = y; j < y + h; j++) {
-				for (int i = x; i < x + w; i++) {
-
-
-					mask.at<cv::Vec3b>(j, i) = cv::Vec3b(0, 0, 0);
-
-				}
-			}
-
-		}
-	}
-	else {
-		std::cout << "error path\n";
-	}
-
-	//cv::imshow("mask", mask);
-	//cv::waitKey(0);
-}
-
 void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 	// Vectors to store the starting and ending points of the lines
 	std::vector<cv::Point> starters_up, starters_down;
@@ -607,9 +562,14 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 	int w = box_parameters[2];
 	int h = box_parameters[3];
 
-	
+	//number of pixels detected as part of the temporary player 
 	double n_nonzeros = cv::countNonZero(mask);
+	
+	//numbeer of pixels inside the image
+	
 	double tot = mask.cols * mask.rows;
+	
+	//number of black pixels
 	double n_zeros = tot - n_nonzeros;
 	
 	double more = 0.0;
@@ -617,29 +577,35 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 	if (n_nonzeros / tot > 0.75) {
 		double num = n_nonzeros / tot;
 		num = num * 20;
-		if (x + w + num < clustering.cols) {
+		if (n_nonzeros / tot > 90) {
+			num = 30;
+			
+		}
+		if (x + w + num <= clustering.cols) {
 
 			w += num;
 
-			cv::Mat paddedImage(mask.rows, mask.cols + num, mask.type(), cv::Vec3b(0,0,0));
+			cv::Mat paddedImage(mask.rows, mask.cols + static_cast<int>(num), mask.type(), cv::Vec3b(0,0,0));
 			mask.copyTo(paddedImage(cv::Rect(0, 0, mask.cols, mask.rows)));
 			mask = paddedImage.clone();
 			//more = -0.1;
-			n_zeros =n_zeros+ (num*mask.rows);
+			n_zeros =n_zeros+ (static_cast<int>(num)*mask.rows);
 		}
+
 		//provare a farlo entrare a tutti i costi
-		if (x  - num > 0) {
+		
+		if (x  - num >= 0) {
 			x = x - num;
-			cv::Mat paddedImage(mask.rows, mask.cols + num, mask.type(), cv::Vec3b(0, 0, 0));
-			mask.copyTo(paddedImage(cv::Rect(num, 0, mask.cols, mask.rows)));
+			cv::Mat paddedImage(mask.rows, mask.cols + static_cast<int>(num), mask.type(), cv::Vec3b(0, 0, 0));
+			mask.copyTo(paddedImage(cv::Rect(static_cast<int>(num), 0, mask.cols, mask.rows)));
 			mask = paddedImage.clone();
 			//more = -0.1;
-			n_zeros = n_zeros + (num * mask.rows);
+			n_zeros = n_zeros + (static_cast<int>(num) * mask.rows);
 		}
 
 	}
 
-	
+	std::cout <<x+w <<std::endl;
 	cv::Mat box_superimpose(mask.size(), CV_8UC3);
 	cv::Mat box(mask.size(), CV_8UC3);
 	cv::Mat reverse_box(mask.size(), CV_8UC3);
@@ -672,7 +638,7 @@ for (int i = y; i < y + h; i++) {
 	std::vector<std::pair<int, cv::Vec3b>> combinedVector;
 
 
-	cv::imshow(" ", box_superimpose);
+	cv::imshow(" ", reverse_box);
 	cv::waitKey(0);
 
 	//find all the color outside the shape of the mask
@@ -705,7 +671,7 @@ for (int i = y; i < y + h; i++) {
 		}
 	}
 
-
+	std::cout << "new image\n";
 	double num_labels = colors.size();
 	std::sort(combinedVector.begin(), combinedVector.end(), sortbysec);
 	//i take only the pixel who are the most out 
@@ -713,12 +679,15 @@ for (int i = y; i < y + h; i++) {
 	for (int z = 0; z < colors.size(); z++) {
 	 double n_elements = combinedVector[z].first;
 		
-		double fr = n_elements / n_zeros;
+		double fr = n_elements ;
 		
-		double tr = 1 / num_labels;
+		double tr = n_zeros / num_labels;
 		
 		//skip
-		if (fr < tr+more) {
+		if (fr <= tr) {
+			std::cout << num_labels << std::endl;
+			std::cout<<fr<<std::endl;
+			std::cout<<tr<<std::endl;
 			continue;
 		}
 		else {
