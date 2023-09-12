@@ -39,11 +39,19 @@ std::vector<std::vector<cv::Rect>> reshapeBB(std::vector<BoundingBox> bbs, int N
 
 //***Classification Functions***
 
-/// @brief 
+/// @brief Classifies the rectangles in the image
 /// @param image the image where the rectangles are detected
 /// @param rects the detected rectangles
+/// @param recurse if true, the function will call itself recursively
 /// @return a vector of labels for each rectangle
-std::vector<int> classify(cv::Mat& image, std::vector<cv::Rect> rects);
+std::vector<int> classify(cv::Mat& image, std::vector<cv::Rect>& rects, bool recurse = true);
+
+/// @brief If the classification contains a label with a single box, check the dimension of the box, if not similar to the others, remove it
+/// @param rects rectangles to be cleaned
+/// @param labelsMat labels assigned to the rectangles
+/// @param image original image
+/// @return true if the cleaning is successful and classification needs to be repeated
+bool class_clean(std::vector<cv::Rect>& rects, cv::Mat& labelsMat, cv::Mat& image);
 
 /// @brief Writes the bounding boxes on a file
 /// @param image the image where the rectangles are detected

@@ -188,7 +188,7 @@ void resizeRect(cv::Rect& rect, cv::Mat image) {
 	}
 }
 
-std::vector<int> classify(cv::Mat& image, std::vector<cv::Rect> rects) {
+std::vector<int> classify(cv::Mat& image, std::vector<cv::Rect>& rects, bool recurse) {
     // Compute and normalize histograms for each bounding box
     std::vector<cv::Mat> histograms; // Store histograms for each box
     for (const auto& box : rects) {
@@ -244,12 +244,47 @@ std::vector<int> classify(cv::Mat& image, std::vector<cv::Rect> rects) {
     }
 
     cv::kmeans(distancesMat, 2, labelsMat, cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 10, 1.0), 3, cv::KMEANS_PP_CENTERS);
+
+    // If there are a certain number of boxes, check if the classification is correct
+    bool redo = false;
+    if (rects.size() == 4 || rects.size() == 5 && recurse) {
+        redo = class_clean(rects, labelsMat, image);
+    }
+
+    //If the classification is not correct, call the function again
+    if (redo) {
+       return classify(image, rects, false);
+    }
+
     // labels must be 1 and 2
     for (int i = 0; i < labelsMat.rows; i++) {
 		labels.push_back(labelsMat.at<int>(i, 0) + 1);
 	}
 
     return labels;
+}
+
+bool class_clean(std::vector<cv::Rect>& rects, cv::Mat& labelsMat, cv::Mat& image) {
+    bool redo = false;
+    // Count the number of boxes for each label
+    std::vector<int> labelCount(2, 0);
+    for (int i = 0; i < labelsMat.rows; i++) {
+        labelCount[labelsMat.at<int>(i, 0)]++;
+    }
+    // If one label is assigned to only one box, and the height of the box is less than 1/3 of the image heigth, delete the box
+    for (int i = 0; i < labelCount.size(); i++) {
+        if (labelCount[i] == 1) {
+            for (int j = 0; j < labelsMat.rows; j++) {
+                if (labelsMat.at<int>(j, 0) == i) {
+                    if (rects[j].height < image.rows / 3) {
+                        rects.erase(rects.begin() + j);
+                        redo = true;
+                    }
+                }
+            }
+        }
+    }
+    return redo;
 }
 
 void writeBB(cv::Mat& image, std::vector<cv::Rect> rects, std::vector<int> labels, std::string rel_path)

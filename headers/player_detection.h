@@ -43,4 +43,6 @@ bool sortbysec(const std::pair<int, cv::Vec3b>& a,
 
 void remove_components(cv::Mat& mask);
 
+void calculateLBP(cv::Mat image, cv::Mat lbpImage, int radius, int neighbors);
+
 #endif // !PLAYER_DETECTION_H

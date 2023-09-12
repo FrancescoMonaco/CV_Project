@@ -363,15 +363,15 @@ void singleImageAP(const std::vector<BoundingBox> resultData, const std::vector<
                 result_im_rev.push_back(resultData_rev[i]);
             }
         }
-        //      for (size_t i = 0; i < predData.size(); i++) {
-        //          if (predData[i].fileNum == k + 1) {
-              //		pred_im.push_back(predData[i]);
-              //	}
-              //}
+        for (size_t i = 0; i < predData.size(); i++) {
+            if (predData[i].fileNum == k + 1) {
+              		pred_im.push_back(predData[i]);
+            }
+        }
 
         std::cout << "Image " << k + 1 << " eval" << std::endl;
-        float result_bb = processBoxPreds(result_im, result_im);
-        float result_bb_rev = processBoxPreds(result_im_rev, result_im);
+        float result_bb = processBoxPreds(result_im, pred_im);
+        float result_bb_rev = processBoxPreds(result_im_rev, pred_im);
         std::cout << "AP: " << std::max(result_bb, result_bb_rev) << std::endl;
 
     }

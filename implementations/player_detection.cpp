@@ -1,12 +1,17 @@
 #include "../headers/player_detection.h"
-#include <cmath>
 
 void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 
 
 	std::ifstream file(str);
 	cv::Mat mask = image.clone();
-	create_mask(image, mask, str);
+	//create_mask(image, mask, str);
+	cv::Mat median_image;
+	cv::medianBlur(image, median_image, 3);
+	cv::Mat cluster;
+
+	//spectralClusteringSegmentation(image,12);
+	clustering(image, cluster);
 
 	if (file.is_open()) {
 
@@ -28,8 +33,8 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 			parameters.push_back(y);
 			parameters.push_back(w);
 			parameters.push_back(h);
-			//isolate the box CHECK
 
+			//isolate the box CHECK
 			cv::Mat mask_temp = mask.clone();
 			for (int j = y; j < y + h; j++) {
 				for (int i = x; i < x + w; i++) {
@@ -81,63 +86,70 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 			// Create a copy of the original image to draw the detected lines
 			cv::Mat output_image(img_grey.size(), CV_8UC1, cv::Scalar(0, 0, 0));//temp
 
-			// Filter and draw only the long contours (lines)
-			int min_contour_length = 25; // Set your desired minimum contour (line) length
 
-			for (int i = 0; i < contours.size(); i++) {
+			//double sum = 0;
+			//for (int i = 0; i < contours.size(); i++) {
 
-				if (cv::arcLength(contours[i], true) >= min_contour_length) {
-					cv::drawContours(output_image, contours, static_cast<int>(i), cv::Scalar(255, 255, 255), 1); // Set thickness to 1
-				}
+			//	sum+= cv::arcLength(contours[i], true);
 
-			}
+			//}
+			//double threshold = sum/contours.size();
+
+			//for (int i = 0; i < contours.size(); i++) {
+
+			//	if (cv::arcLength(contours[i], true) >= threshold) {
+			//		cv::drawContours(output_image, contours, static_cast<int>(i), cv::Scalar(255, 255, 255), 1); // Set thickness to 1
+			//	}
+
+			//}
+
 
 			// Display the resulting image with the detected lines
 			/*cv::imshow("Detected Lines", output_image);
-			cv::waitKey(0);*/
-
+			cv::waitKey(0);
+			*/
 
 			//close the lines found out by using the clustering and after removing the less important 
 			close_lines(edges);
 
-			/*cv::imshow(" ", edges);
-			cv::waitKey(0);*/
+			//cv::imshow("linee ", edges);
+			//cv::waitKey(0);
 
 			create_lines(edges, edges);
 
-			/*cv::imshow(" ",edges);
+			/*cv::imshow(" ", edges);
 			cv::waitKey(0);*/
 
 			//i use this function to color inside the figures
 			fill_segments(edges);
 
-			cv::imshow(" ", edges);
-			cv::waitKey(0);
+			//cv::imshow("segmentation", edges);
+			//cv::waitKey(0);
 
-			cv::Mat cluster;
+			//cv::Mat cluster;
 
-			//clustering(mask_temp, cluster);
+			//clustering(image, cluster);
 
-			//super_impose(cluster, edges, parameters);
+			super_impose(cluster, edges, parameters);
 
 			//create the final mask for segmentation
 
-			//for (int j = y; j < y + h; j++) {
-			//	for (int i = x; i < x + w; i++) {
+			for (int j = y; j < y + h; j++) {
+				for (int i = x; i < x + w; i++) {
 
-			//		//make the union of bodies in different boxes
-			//		if (seg_image.at<uchar>(j, i) != 255) {
-			//			seg_image.at<uchar>(j, i) = edges.at<uchar>(j - y, i - x);
-			//		}
-			//		else {
-			//			continue;
-			//		}
-			//	}
-			//}
-			//
-			//	cv::imshow("mask", mask_temp);
-			//	cv::waitKey(0);
-			
+					//make the union of bodies in different boxes
+					if (seg_image.at<uchar>(j, i) != 255) {
+						seg_image.at<uchar>(j, i) = edges.at<uchar>(j - y, i - x);
+					}
+					else {
+						continue;
+					}
+				}
+			}
+			/*
+				cv::imshow("mask", mask_temp);
+				//cv::waitKey(0);
+			*/
 
 			cv::destroyAllWindows();
 		}
@@ -161,7 +173,7 @@ void close_lines(cv::Mat& edge_image) {
 
 	int morph_size = 3;
 
-	cv::Mat element = getStructuringElement(cv::MORPH_ELLIPSE
+	cv::Mat element = getStructuringElement(cv::MORPH_CROSS
 		, cv::Size(morph_size, morph_size));
 
 	cv::Mat img_out;
@@ -200,9 +212,9 @@ void fill_segments(cv::Mat& edge_image) {
 void clustering(cv::Mat image, cv::Mat& cluster) {
 
 
-	int numClusters = 15; // Number of desired colors after quantization
+	int numClusters = 11; // Number of desired colors after quantization
 	cv::Mat labels, centers;
-	cv::TermCriteria criteria = cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 10, 0.1);
+	cv::TermCriteria criteria = cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::MAX_ITER, 10, 0.01);
 
 	cv::Mat image_box;
 	cv::cvtColor(image, image_box, cv::COLOR_BGR2HSV);
@@ -213,34 +225,56 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 	cv::Mat mask(image_box.rows, image_box.cols, CV_8UC1);
 	std::vector<cv::Point> pixel_positions;
 
+
+	cv::Mat lbpImage(image.size(), CV_8U, cv::Scalar(0));
+	//calculate local binary pattern
+	calculateLBP(image, lbpImage, 3, 5);
+
+	//calculate first derivative to enhance contours
+	//
+	//cv::Mat edges_prewitt_horizontal;
+	//cv::Sobel(image,edges_prewitt_horizontal, CV_32F, 1, 0, 3);
+	//cv::Mat edges_prewitt_vertical;
+	//cv::Sobel(image, edges_prewitt_vertical, CV_32F, 1, 0, 3);
+	//// Compute the magnitude of the gradient
+	//cv::Mat gradientMagnitude;
+	//cv::magnitude(edges_prewitt_horizontal, edges_prewitt_vertical, gradientMagnitude);
+
+	//// Convert the gradient magnitude to an 8-bit image for visualization
+	//cv::Mat gradientMagnitude8U;
+	//gradientMagnitude.convertTo(gradientMagnitude8U, CV_8U);
+
+	// Display the gradient magnitude
+	/*cv::imshow("Gradient Magnitude", gradientMagnitude8U);
+	cv::waitKey(0);*/
+
+
 	for (int i = 0; i < image_box.rows; i++) {
 		for (int j = 0; j < image_box.cols; j++) {
 
-			if (image_box.at<cv::Vec3b>(i, j) == cv::Vec3b(0, 0, 0)) {
+			vec.push_back(image_box.at<cv::Vec3b>(i, j));
+			mask.at<uchar>(i, j) = 1;
+			pixel_positions.push_back(cv::Point(j, i)); // Store pixel positions
 
-				mask.at<uchar>(i, j) = 0;
 
-			}
-			else {
-
-				vec.push_back(image_box.at<cv::Vec3b>(i, j));
-				mask.at<uchar>(i, j) = 1;
-				pixel_positions.push_back(cv::Point(j, i)); // Store pixel positions
-
-			}
 		}
 	}
 
 	// Convert Vec3b data to a format suitable for K-means
-	cv::Mat flattened_data(vec.size(), 50, CV_32F);
+	cv::Mat flattened_data(vec.size(), 4, CV_32F);
 
-	for (size_t i = 0; i < vec.size(); ++i) {
+	int z = 0;
+
+	for (int i = 0; i < vec.size(); i++) {
+
 		flattened_data.at<float>(i, 0) = vec[i][0];
 		flattened_data.at<float>(i, 1) = vec[i][1];
 		flattened_data.at<float>(i, 2) = vec[i][2];
-
-
+		flattened_data.at<float>(z, 3) = lbpImage.at<uchar>(i / lbpImage.cols, i % lbpImage.cols);
+		//flattened_data.at<float>(z, 4) = gradientMagnitude8U.at<uchar>(i/image.cols,i%image.cols);
+		z++;
 	}
+
 
 	cv::normalize(flattened_data, flattened_data, 0, 1, cv::NORM_MINMAX);
 
@@ -271,7 +305,7 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 	clustered = cv::Mat(image_box.rows, image_box.cols, CV_8UC3);
 
 
-	int z = 0;
+	z = 0;
 
 	for (int i = 0; i < image_box.rows; i++) {
 
@@ -294,61 +328,15 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 	cluster = clustered.clone();
 
 
-	cv::imshow("clustering", cluster);
-	cv::waitKey(0);
-
-
-
-
-
-}
-
-void create_mask(cv::Mat image, cv::Mat& mask, std::string str) {
-
-	std::ifstream file(str);
-
-
-	if (file.is_open()) {
-
-		std::string line;
-
-		//take the string with the position of bounding box
-		while (std::getline(file, line)) {
-			int x, y, w, h;
-
-			std::istringstream iss(line);
-
-			iss >> x >> y >> w >> h;
-
-
-			for (int j = y; j < y + h; j++) {
-				for (int i = x; i < x + w; i++) {
-
-
-					mask.at<cv::Vec3b>(j, i) = cv::Vec3b(0, 0, 0);
-
-				}
-			}
-
-		}
-	}
-	else {
-		std::cout << "error path\n";
-	}
-
-	//cv::imshow("mask", mask);
+	//cv::imshow("clustering", cluster);
 	//cv::waitKey(0);
+
 }
-
-
-
 void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 	// Vectors to store the starting and ending points of the lines
 	std::vector<cv::Point> starters_up, starters_down;
 	std::vector<cv::Point> terminators_up, terminators_down;
 
-
-	cv::imshow("first edges", edges);
 
 	bool start_up = false, start_down = false;
 
@@ -399,11 +387,11 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 
 	for (int i = 0; i < starters_up.size(); i++) {
 
-			//take starting and ending point
+		//take starting and ending point
 		cv::Point starte = starters_up[i];
 		cv::Point end = terminators_up[i];
 
-		if (end.x - starte.x > edges.rows/4) {
+		if (end.x - starte.x > edges.rows / 4) {
 
 		}
 		else {
@@ -433,7 +421,7 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 		cv::Point starte = starters_down[i];
 		cv::Point end = terminators_down[i];
 
-		if (end.x - starte.x> edges.rows/4) {
+		if (end.x - starte.x > edges.rows / 2) {
 			continue;
 		}
 		else {
@@ -508,7 +496,7 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 		cv::Point starte = starters_up[i];
 		cv::Point end = terminators_up[i];
 
-		if ((end.y - starte.y) > edges.rows/4) {
+		if ((end.y - starte.y) > edges.rows / 2) {
 
 		}
 		else {
@@ -527,39 +515,39 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 
 	// RIGHT closure
 	if (start_down) {
-			starters_down.pop_back();
-	
+		starters_down.pop_back();
+
 	}
 
 
 	for (int i = 0; i < starters_down.size(); i++) {
-	
-	
-			cv::Point starte = starters_down[i];
-			cv::Point end = terminators_down[i];
-	
-			if (end.y - starte.y > edges.cols/5) {
-	
+
+
+		cv::Point starte = starters_down[i];
+		cv::Point end = terminators_down[i];
+
+		if (end.y - starte.y > edges.cols / 3) {
+
+		}
+		else {
+			for (int j = starte.y; j < end.y; j++) {
+
+				edges.at<uchar>(j, col - 1) = 255;
+				edges.at<uchar>(j, col - 2) = 255;
+				edges.at<uchar>(j, col - 3) = 255;
+				edges.at<uchar>(j, col - 4) = 255;
+				edges.at<uchar>(j, col - 5) = 255;
+
 			}
-			else {
-				for (int j = starte.y; j < end.y; j++) {
-	
-					edges.at<uchar>(j, col-1) = 255;
-					edges.at<uchar>(j, col-2) = 255;
-					edges.at<uchar>(j, col-3) = 255;
-					edges.at<uchar>(j, col-4) = 255;
-					edges.at<uchar>(j, col-5) = 255;
-	
-				}
-			}
-	
 		}
 
-	output_edges = edges.clone();
-	cv::imshow("new edges", edges);
-	cv::waitKey(0);
-}
+	}
 
+	output_edges = edges.clone();
+	/*cv::imshow("new edges", edges);
+	cv::waitKey(0);*/
+
+}
 bool sortbysec(const std::pair<int, cv::Vec3b>& a,
 	const std::pair<int, cv::Vec3b>& b)
 {
@@ -574,38 +562,53 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 	int w = box_parameters[2];
 	int h = box_parameters[3];
 
-
+	//number of pixels detected as part of the temporary player 
 	double n_nonzeros = cv::countNonZero(mask);
+
+	//numbeer of pixels inside the image
+
 	double tot = mask.cols * mask.rows;
+
+	//number of black pixels
 	double n_zeros = tot - n_nonzeros;
 
 	double more = 0.0;
 
 	if (n_nonzeros / tot > 0.75) {
+		double num = n_nonzeros / tot;
+		num = num * 20;
+		if (n_nonzeros / tot > 90) {
+			num = 30;
 
-		if (x + w + 20 < clustering.cols) {
+		}
+		if (x + w + num <= clustering.cols) {
 
-			w += 20;
+			w += num;
 
-			cv::Mat paddedImage(mask.rows, mask.cols + 20, mask.type(), cv::Vec3b(0, 0, 0));
+			cv::Mat paddedImage(mask.rows, mask.cols + static_cast<int>(num), mask.type(), cv::Vec3b(0, 0, 0));
 			mask.copyTo(paddedImage(cv::Rect(0, 0, mask.cols, mask.rows)));
 			mask = paddedImage.clone();
 			//more = -0.1;
-			n_zeros = n_zeros + (20 * mask.rows);
+			n_zeros = n_zeros + (static_cast<int>(num) * mask.rows);
 		}
 
-		if (x - 20 > 0) {
-			x = x - 20;
-			cv::Mat paddedImage(mask.rows, mask.cols + 20, mask.type(), cv::Vec3b(0, 0, 0));
-			mask.copyTo(paddedImage(cv::Rect(20, 0, mask.cols, mask.rows)));
+		//provare a farlo entrare a tutti i costi
+
+		if (x - num >= 0) {
+			x = x - num;
+			cv::Mat paddedImage(mask.rows, mask.cols + static_cast<int>(num), mask.type(), cv::Vec3b(0, 0, 0));
+			mask.copyTo(paddedImage(cv::Rect(static_cast<int>(num), 0, mask.cols, mask.rows)));
 			mask = paddedImage.clone();
 			//more = -0.1;
-			n_zeros = n_zeros + (20 * mask.rows);
+			w += num;
+			n_zeros = n_zeros + (static_cast<int>(num) * mask.rows);
 		}
 
 	}
 
-
+	/*cv::imshow("padded image", mask);
+	cv::waitKey(0);*/
+	std::cout << x + w << std::endl;
 	cv::Mat box_superimpose(mask.size(), CV_8UC3);
 	cv::Mat box(mask.size(), CV_8UC3);
 	cv::Mat reverse_box(mask.size(), CV_8UC3);
@@ -638,8 +641,8 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 	std::vector<std::pair<int, cv::Vec3b>> combinedVector;
 
 
-	cv::imshow(" ", box_superimpose);
-	cv::waitKey(0);
+	/*cv::imshow(" ", reverse_box);
+	cv::waitKey(0);*/
 
 	//find all the color outside the shape of the mask
 	for (int i = 0; i < mask.rows; i++) {
@@ -671,7 +674,7 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 		}
 	}
 
-
+	std::cout << "new image\n";
 	double num_labels = colors.size();
 	std::sort(combinedVector.begin(), combinedVector.end(), sortbysec);
 	//i take only the pixel who are the most out 
@@ -679,12 +682,15 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 	for (int z = 0; z < colors.size(); z++) {
 		double n_elements = combinedVector[z].first;
 
-		double fr = n_elements / n_zeros;
-		//std::cout << fr << std::endl;
-		double tr = 1 / num_labels;
-		//std::cout << tr << std::endl;
+		double fr = n_elements;
+
+		double tr = n_zeros / num_labels;
+
 		//skip
-		if (fr < tr + more) {
+		if (fr <= tr) {
+			std::cout << num_labels << std::endl;
+			std::cout << fr << std::endl;
+			std::cout << tr << std::endl;
 			continue;
 		}
 		else {
@@ -700,8 +706,8 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 
 				}
 			}
-			cv::imshow(" ", box_superimpose);
-			cv::waitKey(0);
+			/*cv::imshow(" ", box_superimpose);
+			cv::waitKey(0);*/
 		}
 
 	}
@@ -713,12 +719,13 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 	cv::inRange(box_superimpose, cv::Vec3b(0, 0, 0), cv::Vec3b(0, 0, 0), inversion);
 
 	cv::bitwise_not(inversion, final_seg);
-	cv::imshow("", final_seg);
-	cv::waitKey(0);
+	//cv::imshow("", final_seg);
+	//cv::waitKey(0);
 
 	mask = final_seg.clone();
 	remove_components(mask);
 }
+
 void remove_components(cv::Mat& mask) {
 
 	// Create a labeled image to store connected components
@@ -728,34 +735,22 @@ void remove_components(cv::Mat& mask) {
 	// Create a vector to store the pixel counts for each region
 	std::vector<int> regionPixelCounts(numLabels, 0);
 
+	//count number of variables 
+	double tot = 0;
+
 	// Iterate through the labeled image and count pixels for each label
 	for (int y = 0; y < labeledImage.rows; y++) {
 		for (int x = 0; x < labeledImage.cols; x++) {
 			int label = labeledImage.at<int>(y, x);
 
 			if (label > 0) {
+				tot++;
 				regionPixelCounts[label]++;
 			}
 
 		}
 	}
 
-	//
-	//std::vector<cv::Vec3b> colors(numLabels);
-	//for (int label = 0; label < numLabels; ++label) {
-	//	colors[label] = cv::Vec3b(rand() % 256, rand() % 256, rand() % 256);
-	//}
-
-
-	//// Create a color image from the labeled image
-	//cv::Mat coloredLabels(labeledImage.size(), CV_8UC3);
-	//for (int i = 0; i < labeledImage.rows; ++i) {
-	//	for (int j = 0; j < labeledImage.cols; ++j) {
-	//		int label = labeledImage.at<int>(i, j);
-	//		coloredLabels.at<cv::Vec3b>(i, j) = colors[label];
-	//	}
-	//}
-	double tot = mask.cols * mask.rows;
 
 	double medium = tot / regionPixelCounts.size();
 
@@ -777,7 +772,37 @@ void remove_components(cv::Mat& mask) {
 		}
 	}
 
-	cv::imshow("final mask", mask);
-	cv::waitKey(0);
+	/*cv::imshow("final mask", mask);
+	cv::waitKey(0);*/
+
+}
+
+
+
+void calculateLBP(cv::Mat image, cv::Mat lbpImage, int radius, int neighbors) {
+	cv::Mat grayImage;
+
+	cv::cvtColor(image, grayImage, cv::COLOR_BGR2GRAY);
+
+
+
+	for (int i = radius; i < grayImage.rows - radius; i++) {
+		for (int j = radius; j < grayImage.cols - radius; j++) {
+			uchar center = grayImage.at<uchar>(i, j);
+			uchar code = 0;
+
+			for (int k = 0; k < neighbors; k++) {
+				int x = j + static_cast<int>(radius * cos(2.0 * CV_PI * k / neighbors));
+				int y = i - static_cast<int>(radius * sin(2.0 * CV_PI * k / neighbors));
+
+				if (grayImage.at<uchar>(y, x) >= center) {
+					code |= (1 << k);
+				}
+			}
+
+			lbpImage.at<uchar>(i, j) = code;
+		}
+	}
+
 
 }
