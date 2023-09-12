@@ -19,7 +19,5 @@ bool sortbysec(const std::pair<int, cv::Vec3b>& a,
 	const std::pair<int, cv::Vec3b>& b);
 
 void remove_components(cv::Mat& mask);
-//not used
-void spectralClusteringSegmentation(const cv::Mat& input_image, int num_clusters);
 
 void calculateLBP(cv::Mat image, cv::Mat lbpImage, int radius, int neighbors);

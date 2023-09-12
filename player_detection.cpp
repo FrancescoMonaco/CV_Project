@@ -15,7 +15,7 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 	cv::Mat cluster;
 
 	//spectralClusteringSegmentation(image,12);
-	clustering(median_image, cluster);
+	clustering(image, cluster);
 
 	if (file.is_open()) {
 
@@ -181,7 +181,7 @@ void close_lines(cv::Mat& edge_image) {
 		, cv::Size(morph_size, morph_size));
 
 	cv::Mat img_out;
-	morphologyEx(edge_image, img_out, cv::MORPH_GRADIENT, element, cv::Point(-1, -1), 3);
+	morphologyEx(edge_image, img_out, cv::MORPH_GRADIENT, element, cv::Point(-1, -1), 2);
 	
 	
 	edge_image = img_out.clone();
@@ -256,36 +256,34 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 	for (int i = 0; i < image_box.rows; i++) {
 		for (int j = 0; j < image_box.cols; j++) {
 
-			if (image_box.at<cv::Vec3b>(i, j) == cv::Vec3b(0, 0, 0)) {
-
-				mask.at<uchar>(i, j) = 0;
-
-			}
-			else {
-
 				vec.push_back(image_box.at<cv::Vec3b>(i, j));
 				mask.at<uchar>(i, j) = 1;
 				pixel_positions.push_back(cv::Point(j, i)); // Store pixel positions
 
-			}
+			
 		}
 	}
 
 	// Convert Vec3b data to a format suitable for K-means
-	cv::Mat flattened_data(vec.size(), 5, CV_32F);
+	cv::Mat flattened_data(vec.size(), 4, CV_32F);
+	
+	int z = 0;
 
-	for (size_t i = 0; i < vec.size(); ++i) {
-		flattened_data.at<float>(i, 0) = vec[i][0];
-		flattened_data.at<float>(i, 1) = vec[i][1];
-		flattened_data.at<float>(i, 2) = vec[i][2];
-		flattened_data.at<float>(i, 3) = lbpImage.at<uchar>(i % image.cols, i / image.cols);
-		flattened_data.at<float>(i, 3) = gradientMagnitude8U.at<uchar>(i%image.cols, i/image.cols);
+	for(int i=0;i<vec.size();i++){
+
+			flattened_data.at<float>(i, 0) = vec[i][0];
+			flattened_data.at<float>(i, 1) = vec[i][1];
+			flattened_data.at<float>(i, 2) = vec[i][2];
+			flattened_data.at<float>(z, 3) = lbpImage.at<uchar>(i/lbpImage.cols,i%lbpImage.cols);
+			//flattened_data.at<float>(z, 4) = gradientMagnitude8U.at<uchar>(i/image.cols,i%image.cols);
+			z++;
 	}
+	
 
 	cv::normalize(flattened_data, flattened_data, 0, 1, cv::NORM_MINMAX);
 
 	//cv::Mat flat = image_box.reshape(1, image_box.cols * image_box.rows);
-	cv::kmeans(flattened_data, numClusters, labels, criteria, 50, cv::KMEANS_PP_CENTERS, centers);
+	cv::kmeans(flattened_data, numClusters, labels, criteria, 5, cv::KMEANS_PP_CENTERS, centers);
 
 	// Define replacement colors
 	cv::Vec3b colors[15];
@@ -311,7 +309,7 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 	clustered = cv::Mat(image_box.rows, image_box.cols, CV_8UC3);
 
 
-	int z = 0;
+	 z = 0;
 
 	for (int i = 0; i < image_box.rows; i++) {
 
@@ -342,7 +340,6 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 
 
 }
-
 void create_mask(cv::Mat image, cv::Mat& mask, std::string str) {
 
 	std::ifstream file(str);
@@ -385,8 +382,6 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 	std::vector<cv::Point> starters_up, starters_down;
 	std::vector<cv::Point> terminators_up, terminators_down;
 
-
-	cv::imshow("first edges", edges);
 
 	bool start_up = false, start_down = false;
 
@@ -471,7 +466,7 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 		cv::Point starte = starters_down[i];
 		cv::Point end = terminators_down[i];
 
-		if (end.x - starte.x > edges.rows / 4) {
+		if (end.x - starte.x > edges.rows / 2) {
 			continue;
 		}
 		else {
@@ -546,7 +541,7 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 		cv::Point starte = starters_up[i];
 		cv::Point end = terminators_up[i];
 
-		if ((end.y - starte.y) > edges.rows / 4) {
+		if ((end.y - starte.y) > edges.rows / 2) {
 
 		}
 		else {
@@ -576,7 +571,7 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 		cv::Point starte = starters_down[i];
 		cv::Point end = terminators_down[i];
 
-		if (end.y - starte.y > edges.cols / 5) {
+		if (end.y - starte.y > edges.cols / 3) {
 
 		}
 		else {
@@ -594,11 +589,10 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 	}
 
 	output_edges = edges.clone();
-	//cv::imshow("new edges", edges);
-	//cv::waitKey(0);
+	/*cv::imshow("new edges", edges);
+	cv::waitKey(0);*/
 
 }
-
 bool sortbysec(const std::pair<int, cv::Vec3b>& a,
 	const std::pair<int, cv::Vec3b>& b)
 {
@@ -720,9 +714,9 @@ for (int i = y; i < y + h; i++) {
 	 double n_elements = combinedVector[z].first;
 		
 		double fr = n_elements / n_zeros;
-		//std::cout << fr << std::endl;
+		
 		double tr = 1 / num_labels;
-		//std::cout << tr << std::endl;
+		
 		//skip
 		if (fr < tr+more) {
 			continue;
@@ -785,21 +779,6 @@ void remove_components(cv::Mat& mask) {
 		}
 	}
 	
-	//
-	//std::vector<cv::Vec3b> colors(numLabels);
-	//for (int label = 0; label < numLabels; ++label) {
-	//	colors[label] = cv::Vec3b(rand() % 256, rand() % 256, rand() % 256);
-	//}
-
-
-	//// Create a color image from the labeled image
-	//cv::Mat coloredLabels(labeledImage.size(), CV_8UC3);
-	//for (int i = 0; i < labeledImage.rows; ++i) {
-	//	for (int j = 0; j < labeledImage.cols; ++j) {
-	//		int label = labeledImage.at<int>(i, j);
-	//		coloredLabels.at<cv::Vec3b>(i, j) = colors[label];
-	//	}
-	//}
 	
 	double medium = tot/regionPixelCounts.size();
 	
@@ -826,46 +805,6 @@ void remove_components(cv::Mat& mask) {
 
 }
 
-
-void spectralClusteringSegmentation(const cv::Mat& input_image, int num_clusters) {
-	cv::Mat gray_image;
-	cv::cvtColor(input_image, gray_image, cv::COLOR_BGR2GRAY);
-
-	// Create a similarity graph based on pixel intensities
-	int rows = gray_image.rows;
-	int cols = gray_image.cols;
-	int num_pixels = rows * cols;
-
-	Eigen::SparseMatrix<double> affinity_matrix(num_pixels, num_pixels);
-
-	// Fill in the affinity_matrix based on pixel intensities (similar to previous example)
-
-	// Perform spectral clustering
-	Eigen::VectorXd eigenvalues;
-	Eigen::MatrixXd eigenvectors;
-
-	// Compute eigenvalues and eigenvectors of the Laplacian matrix (similar to previous example)
-
-	// Perform k-means clustering on the eigenvectors
-	cv::Mat clustering_result;
-	cv::Mat eigenvectors_mat;
-	cv::eigen2cv(eigenvectors, eigenvectors_mat);
-
-	cv::kmeans(eigenvectors_mat, num_clusters, clustering_result, cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 10, 1.0), 3, cv::KMEANS_RANDOM_CENTERS);
-
-	// Create a segmented image
-	cv::Mat segmented_image(rows, cols, CV_8UC1);
-	for (int i = 0; i < num_pixels; i++) {
-		int cluster_label = clustering_result.at<int>(i, 0);
-		int row = i / cols;
-		int col = i % cols;
-		segmented_image.at<uchar>(row, col) = static_cast<uchar>(255 * cluster_label / (num_clusters - 1));
-	}
-	cv::imshow("Segmented Image", segmented_image);
-	cv::waitKey(0);
-
-	//return segmented_image;
-}
 
 
 void calculateLBP(cv::Mat image,cv::Mat lbpImage, int radius, int neighbors) {
