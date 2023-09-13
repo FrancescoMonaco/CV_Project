@@ -97,14 +97,13 @@ float processBoxPreds(const std::vector<BoundingBox>& resultData, const std::vec
 			numClasses++;
 		}
 	}
-
     //for each class compute AP and push it into a vector
     std::vector<float> AP;
 
     for (int i = 0; i < numClasses; i++) {
         AP.push_back( computeAP(resultData, predData, classCount[i]) );
     }
-
+    std::cout << AP.size() << std::endl;
     // Compute mAP
     float mAP = 0.0f;
     for (float value : AP) {
