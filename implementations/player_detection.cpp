@@ -1,5 +1,7 @@
 #include "../headers/player_detection.h"
 
+// player_detection.cpp : Michele Russo
+
 void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 
 
