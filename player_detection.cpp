@@ -5,12 +5,12 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 
 	std::ifstream file(str);
 	cv::Mat mask = image.clone();
-	//create_mask(image, mask, str);
+
 	cv::Mat median_image;
 	cv::medianBlur(image,median_image,3);
 	cv::Mat cluster;
-
-	//spectralClusteringSegmentation(image,12);
+	
+	//clusterize the image
 	clustering(image, cluster);
 
 	if (file.is_open()) {
@@ -29,12 +29,13 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 
 			cv::Mat img_out(h, w, CV_8UC3);
 
+			//box position and dimension
 			parameters.push_back(x);
 			parameters.push_back(y);
 			parameters.push_back(w);
 			parameters.push_back(h);
 			
-			//isolate the box CHECK
+			//isolate the box 
 			cv::Mat mask_temp = mask.clone();
 			for (int j = y; j < y + h; j++) {
 				for (int i = x; i < x + w; i++) {
@@ -44,16 +45,15 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 
 				}
 			}
-
-			/*cv::imshow("blurred image", img_out);
-			cv::waitKey(0);*/
-
+			
+			//blur the image
 			cv::Mat blur;
 			cv::GaussianBlur(img_out, blur, cv::Size(5, 5), 0.8, 0.8);
 
 			cv::Mat img_grey;
 			cvtColor(blur, img_grey, cv::COLOR_BGR2GRAY);
-
+			
+			//start of computation gradient to create canny threshold 
 			cv::Mat grad_x, grad_y;
 			cv::Mat abs_grad_x, abs_grad_y, test_grad;
 
@@ -69,67 +69,29 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 			double median = mean[0];
 			int canny_c = 5;
 
-
+			//calculaation of the gradient by using the threshold computed before 
 			cv::Mat edges;
-
-
 			cv::Canny(img_grey, edges, canny_c * median / 4, canny_c * median / 2);
 
 			/*cv::imshow("canny ", edges);
 			cv::waitKey(0);*/
 
-
-			// Find contours in the binary image
-			std::vector<std::vector<cv::Point>> contours;
-			cv::findContours(edges, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-
-			// Create a copy of the original image to draw the detected lines
-			cv::Mat output_image(img_grey.size(),CV_8UC1, cv::Scalar(0, 0, 0));//temp
-
-			
-			//double sum = 0;
-			//for (int i = 0; i < contours.size(); i++) {
-
-			//	sum+= cv::arcLength(contours[i], true);
-
-			//}
-			//double threshold = sum/contours.size();
-
-			//for (int i = 0; i < contours.size(); i++) {
-
-			//	if (cv::arcLength(contours[i], true) >= threshold) {
-			//		cv::drawContours(output_image, contours, static_cast<int>(i), cv::Scalar(255, 255, 255), 1); // Set thickness to 1
-			//	}
-
-			//}
-
-
-			// Display the resulting image with the detected lines
-			/*cv::imshow("Detected Lines", output_image);
-			cv::waitKey(0);
-			*/
-
-			//close the lines found out by using the clustering and after removing the less important 
+			//close the edges found on canny 
 			close_lines(edges);
 
 			cv::imshow("linee ", edges);
 			cv::waitKey(0);
 			
+			//add some lines at the boundaries of the edges
 			create_lines(edges, edges);
 
-			/*cv::imshow(" ", edges);
-			cv::waitKey(0);*/
-
-			//i use this function to color inside the figures
+			//i use this function to color inside the figures to get a first temporary segmentation
 			fill_segments(edges);
 
 			cv::imshow("segmentation", edges);
 			cv::waitKey(0);
 
-			//cv::Mat cluster;
-
-			//clustering(image, cluster);
-			
+			//merging color clustering given at start and temporary segmentation computed just for the box
 			super_impose(cluster, edges, parameters);
 
 			//create the final mask for segmentation
@@ -146,10 +108,6 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 					}
 				}
 			}
-			/*
-				cv::imshow("mask", mask_temp);
-				//cv::waitKey(0);
-			*/	
 			
 			cv::destroyAllWindows();
 		}
@@ -175,7 +133,8 @@ void close_lines(cv::Mat& edge_image) {
 
 	cv::Mat element = getStructuringElement(cv::MORPH_CROSS
 		, cv::Size(morph_size, morph_size));
-
+	
+	//perform gradient morphological 
 	cv::Mat img_out;
 	morphologyEx(edge_image, img_out, cv::MORPH_GRADIENT, element, cv::Point(-1, -1), 2);
 	
@@ -186,10 +145,12 @@ void close_lines(cv::Mat& edge_image) {
 
 void fill_segments(cv::Mat& edge_image) {
 
+
 	std::vector<std::vector<cv::Point> > contours;
 	std::vector<cv::Vec4i> hierarchy;
 	cv::Mat dst = cv::Mat::zeros(edge_image.rows, edge_image.cols, CV_8UC3);
-
+	
+	// find contours of the image
 	findContours(edge_image, contours, hierarchy,
 		cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
 
@@ -216,6 +177,7 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 	cv::Mat labels, centers;
 	cv::TermCriteria criteria = cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::MAX_ITER, 100, 0.001);
 	
+	//convert the image into HSV color space since it is more informative than RGB image
 	cv::Mat image_box;
 	cv::cvtColor(image, image_box, cv::COLOR_BGR2HSV);
 
@@ -227,27 +189,9 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 
 
 	cv::Mat lbpImage(image.size(), CV_8U, cv::Scalar(0));
-	//calculate local binary pattern
+	
+	//calculate local binary pattern to add more information about neighboorhood of the single pixel
 	calculateLBP(image,lbpImage,3,5);
-
-	//calculate first derivative to enhance contours
-	//
-	//cv::Mat edges_prewitt_horizontal;
-	//cv::Sobel(image,edges_prewitt_horizontal, CV_32F, 1, 0, 3);
-	//cv::Mat edges_prewitt_vertical;
-	//cv::Sobel(image, edges_prewitt_vertical, CV_32F, 1, 0, 3);
-	//// Compute the magnitude of the gradient
-	//cv::Mat gradientMagnitude;
-	//cv::magnitude(edges_prewitt_horizontal, edges_prewitt_vertical, gradientMagnitude);
-
-	//// Convert the gradient magnitude to an 8-bit image for visualization
-	//cv::Mat gradientMagnitude8U;
-	//gradientMagnitude.convertTo(gradientMagnitude8U, CV_8U);
-
-	// Display the gradient magnitude
-	/*cv::imshow("Gradient Magnitude", gradientMagnitude8U);
-	cv::waitKey(0);*/
-
 
 	for (int i = 0; i < image_box.rows; i++) {
 		for (int j = 0; j < image_box.cols; j++) {
@@ -263,23 +207,20 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 	// Convert Vec3b data to a format suitable for K-means
 	cv::Mat flattened_data(vec.size(), 4, CV_32F);
 	
-	int z = 0;
-
 	for(int i=0;i<vec.size();i++){
 
 			flattened_data.at<float>(i, 0) = vec[i][0];
 			flattened_data.at<float>(i, 1) = vec[i][1];
 			flattened_data.at<float>(i, 2) = vec[i][2];
-			flattened_data.at<float>(z, 3) = lbpImage.at<uchar>(i/lbpImage.cols,i%lbpImage.cols);
-			//flattened_data.at<float>(z, 4) = gradientMagnitude8U.at<uchar>(i/image.cols,i%image.cols);
-			z++;
+			flattened_data.at<float>(i, 3) = lbpImage.at<uchar>(i/lbpImage.cols,i%lbpImage.cols);
+			
 	}
 	
-
+	//normalize data
 	cv::normalize(flattened_data, flattened_data, 0, 1, cv::NORM_MINMAX);
 
 	//cv::Mat flat = image_box.reshape(1, image_box.cols * image_box.rows);
-	cv::kmeans(flattened_data, numClusters, labels, criteria, 50, cv::KMEANS_PP_CENTERS, centers);
+	cv::kmeans(flattened_data, numClusters, labels, criteria, 5, cv::KMEANS_PP_CENTERS, centers);
 
 	// Define replacement colors
 	cv::Vec3b colors[15];
@@ -304,8 +245,8 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 
 	clustered = cv::Mat(image_box.rows, image_box.cols, CV_8UC3);
 
-
-	 z = 0;
+	//add colors on the image
+	 int z = 0;
 
 	for (int i = 0; i < image_box.rows; i++) {
 
@@ -333,6 +274,7 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 
 }
 void create_lines(cv::Mat edges, cv::Mat& output_edges) {
+	
 	// Vectors to store the starting and ending points of the lines
 	std::vector<cv::Point> starters_up, starters_down;
 	std::vector<cv::Point> terminators_up, terminators_down;
@@ -575,6 +517,7 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 	//not used actually
 	double more = 0.0;
 
+	//box expansion when the area of the temporary segmentation is more than 75% than the total are of teh box
 	if (n_nonzeros / tot > 0.75) {
 		double num = n_nonzeros / tot;
 		num = num * 20;
@@ -593,8 +536,6 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 			n_zeros =n_zeros+ (static_cast<int>(num)*mask.rows);
 		}
 
-		//provare a farlo entrare a tutti i costi
-		
 		if (x  - num >= 0) {
 			x = x - num;
 			cv::Mat paddedImage(mask.rows, mask.cols + static_cast<int>(num), mask.type(), cv::Vec3b(0, 0, 0));
@@ -714,9 +655,7 @@ for (int i = y; i < y + h; i++) {
 	cv::inRange(box_superimpose, cv::Vec3b(0, 0, 0), cv::Vec3b(0, 0, 0), inversion);
 	
 	cv::bitwise_not(inversion, final_seg);
-	cv::imshow("", final_seg);
-	cv::waitKey(0);
-
+	
 	//remove the non connected components
 	remove_components(final_seg);
 
@@ -725,6 +664,8 @@ for (int i = y; i < y + h; i++) {
 	cv::Mat originalImage = final_seg(roi);
 	cv::imshow("final seg", originalImage);
 	cv::waitKey(0);
+
+	mask = originalImage.clone();
 }
 
 void remove_components(cv::Mat& mask) {
@@ -784,9 +725,8 @@ void calculateLBP(cv::Mat image,cv::Mat lbpImage, int radius, int neighbors) {
 	cv::Mat grayImage;
 	
 	cv::cvtColor(image, grayImage, cv::COLOR_BGR2GRAY);
-
 	
-
+	
 	for (int i = radius; i < grayImage.rows - radius; i++) {
 		for (int j = radius; j < grayImage.cols - radius; j++) {
 			uchar center = grayImage.at<uchar>(i, j);
