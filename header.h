@@ -12,4 +12,7 @@
 #include <numeric>
 #include <iomanip>
 #include <opencv2/opencv.hpp>
+#include <algorithm>
+#include <opencv2/photo.hpp>
+
 
