@@ -154,7 +154,7 @@ void field_distinction(cv::Mat image_box, cv::Mat clustered, cv::Mat& segmented_
 
 
 	if (pixel_count1 == larger) {
-		std::cout << "1\n";
+
 
 		segmented_field.setTo(green, mask1);
 		segmented_field.setTo(cv::Vec3b(0, 0, 0), mask2);
@@ -162,7 +162,7 @@ void field_distinction(cv::Mat image_box, cv::Mat clustered, cv::Mat& segmented_
 
 	}
 	else if (pixel_count2 == larger) {
-		std::cout << "2\n";
+
 
 		segmented_field.setTo(green, mask2);
 		segmented_field.setTo(cv::Vec3b(0, 0, 0), mask1);
@@ -170,7 +170,6 @@ void field_distinction(cv::Mat image_box, cv::Mat clustered, cv::Mat& segmented_
 
 	}
 	else {
-		std::cout << "3\n";
 
 
 		segmented_field.setTo(green, mask3);
