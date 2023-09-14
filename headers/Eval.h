@@ -5,6 +5,8 @@
 #include <vector>
 #include <opencv2/core.hpp>
 
+//*** Structs definitions ***
+/// @brief BoundingBox struct
 struct BoundingBox {
     int fileNum;
     int x1;
@@ -13,6 +15,9 @@ struct BoundingBox {
     int height;
     int id;
 };
+
+
+//***Functions***
 
 /// @brief Returns a vector of bounding boxes from the given path
 /// @param filePath , path to the file containing the bounding box data

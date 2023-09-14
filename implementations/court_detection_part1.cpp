@@ -1,5 +1,4 @@
 #include"../headers/court_detection.h"
-#include "../headers/segmentation.h"
 
 // court_detection_part1.cpp : Michele Russo
 

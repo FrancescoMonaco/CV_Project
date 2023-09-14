@@ -5,8 +5,6 @@
 //***Constants for the utility functions
 	//Multiplicators for canny and the heat diffusion
 const int canny_c = 9, alpha = 1; const double lambda = 1;
-     //Colors for the segmentation
-std::vector<cv::Vec3b> colors = { cv::Vec3b(0, 0, 255), cv::Vec3b(255, 0, 0) };
 	 //Threshold for the blackness of the rectangle
 const int BLACK_THRESH = 35;
 

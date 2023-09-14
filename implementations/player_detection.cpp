@@ -1,4 +1,6 @@
 #include "../headers/player_detection.h"
+#include <opencv2/photo.hpp>
+#include <opencv2/photo/cuda.hpp>
 
 // player_detection.cpp : Michele Russo
 
@@ -8,8 +10,9 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 	std::ifstream file(str);
 	cv::Mat mask = image.clone();
 
-	cv::Mat median_image;
-	cv::medianBlur(image, median_image, 3);
+
+	cv::fastNlMeansDenoisingColored(image, image, 4.0, 10);
+
 	cv::Mat cluster;
 
 	//clusterize the image
@@ -75,8 +78,8 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 			cv::Mat edges;
 			cv::Canny(img_grey, edges, canny_c * median / 4, canny_c * median / 2);
 
-			/*cv::imshow("canny ", edges);
-			cv::waitKey(0);*/
+			//cv::imshow("canny ", edges);
+			//cv::waitKey(0);
 
 			//close the edges found on canny 
 			close_lines(edges);
@@ -99,6 +102,7 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 			//create the final mask for segmentation
 			h = edges.rows;
 			w = edges.cols;
+
 			for (int j = y; j < y + h; j++) {
 				for (int i = x; i < x + w; i++) {
 
@@ -111,6 +115,8 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 					}
 				}
 			}
+
+
 
 			cv::destroyAllWindows();
 		}
@@ -139,10 +145,12 @@ void close_lines(cv::Mat& edge_image) {
 
 	//perform gradient morphological 
 	cv::Mat img_out;
-	morphologyEx(edge_image, img_out, cv::MORPH_GRADIENT, element, cv::Point(-1, -1), 2);
+	morphologyEx(edge_image, img_out, cv::MORPH_GRADIENT, element, cv::Point(-1, -1), 3);
 
+	cv::Mat img_out1;
+	morphologyEx(img_out, img_out1, cv::MORPH_ERODE, element, cv::Point(-1, -1), 1);
 
-	edge_image = img_out.clone();
+	edge_image = img_out1.clone();
 }
 
 
@@ -178,7 +186,7 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 
 	int numClusters = 11; // Number of desired colors after quantization
 	cv::Mat labels, centers;
-	cv::TermCriteria criteria = cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::MAX_ITER, 10, 0.01);
+	cv::TermCriteria criteria = cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::MAX_ITER, 2, 0.01);
 
 	//convert the image into HSV color space since it is more informative than RGB image
 	cv::Mat image_box;
@@ -188,20 +196,20 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 
 	std::vector<cv::Vec3b> vec;
 	cv::Mat mask(image_box.rows, image_box.cols, CV_8UC1);
-	std::vector<cv::Point> pixel_positions;
+	//std::vector<cv::Point> pixel_positions;
 
 
 	cv::Mat lbpImage(image.size(), CV_8U, cv::Scalar(0));
 
 	//calculate local binary pattern to add more information about neighboorhood of the single pixel
-	calculateLBP(image, lbpImage, 3, 5);
+	calculateLBP(image_box, lbpImage, 3, 5);
 
 	for (int i = 0; i < image_box.rows; i++) {
 		for (int j = 0; j < image_box.cols; j++) {
 
 			vec.push_back(image_box.at<cv::Vec3b>(i, j));
 			mask.at<uchar>(i, j) = 1;
-			pixel_positions.push_back(cv::Point(j, i)); // Store pixel positions
+			//pixel_positions.push_back(cv::Point(j, i)); // Store pixel positions
 
 
 		}
@@ -223,7 +231,7 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 	cv::normalize(flattened_data, flattened_data, 0, 1, cv::NORM_MINMAX);
 
 	//cv::Mat flat = image_box.reshape(1, image_box.cols * image_box.rows);
-	cv::kmeans(flattened_data, numClusters, labels, criteria, 5, cv::KMEANS_PP_CENTERS, centers);
+	cv::kmeans(flattened_data, numClusters, labels, criteria, 2, cv::KMEANS_PP_CENTERS, centers);
 
 	// Define replacement colors
 	cv::Vec3b colors[15];
@@ -521,7 +529,7 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 	double more = 0.0;
 
 	//box expansion when the area of the temporary segmentation is more than 75% than the total are of teh box
-	if (n_nonzeros / tot > 0.75) {
+	if (n_nonzeros / tot > 0.64) {
 		double num = n_nonzeros / tot;
 		num = num * 20;
 		if (n_nonzeros / tot > 90) {
@@ -605,8 +613,7 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 					cv::inRange(reverse_box, color, color, temp);
 
 					int pixel = cv::countNonZero(temp);
-					//cv::imshow("io osno", temp);
-					//cv::waitKey(0);
+
 					combinedVector.push_back(std::pair(pixel, color));
 					colors.push_back(color);
 				}
@@ -659,11 +666,17 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 
 	cv::bitwise_not(inversion, final_seg);
 
+
 	//remove the non connected components
 	remove_components(final_seg);
 
 	//fix the box if it was exapanded 
-	cv::Rect roi(box_parameters[0] - x, 0, box_parameters[2]-1, mask.rows);
+	/*std::cout << box_parameters[0] <<std::endl;
+	std::cout << box_parameters[2] <<std::endl;
+	std::cout << x <<std::endl;*/
+
+
+	cv::Rect roi(box_parameters[0] - x, 0, box_parameters[2] - 1, mask.rows);
 	cv::Mat originalImage = final_seg(roi);
 	//cv::imshow("final seg", originalImage);
 	//cv::waitKey(0);
@@ -719,7 +732,6 @@ void remove_components(cv::Mat& mask) {
 
 	//cv::imshow("final mask", mask);
 	//cv::waitKey(0);
-
 }
 
 
@@ -750,3 +762,4 @@ void calculateLBP(cv::Mat image, cv::Mat lbpImage, int radius, int neighbors) {
 
 
 }
+

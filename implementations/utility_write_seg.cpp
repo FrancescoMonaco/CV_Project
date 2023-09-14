@@ -2,6 +2,10 @@
 #include <fstream>
 
 // Utility_Write_Seg.cpp : Francesco Pio Monaco
+// 
+//***Constants for the utility functions
+//Colors for the segmentation
+std::vector<cv::Vec3b> colors = { cv::Vec3b(0, 0, 255), cv::Vec3b(255, 0, 0) };
 
 //***Implementations
 

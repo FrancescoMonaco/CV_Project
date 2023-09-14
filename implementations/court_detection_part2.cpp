@@ -1,5 +1,4 @@
 #include"../headers/court_detection.h"
-#include "../headers/segmentation.h"
 // court_detection_part2 : Monaco Francesco Pio
 
 bool line_refinement(cv::Mat& image, cv::Vec2f& longest_line) {

@@ -21,12 +21,6 @@ void fill_segments(cv::Mat& edge_image);
 /// @param clustered output array
 void clustering(cv::Mat image_box, cv::Mat& clustered);
 
-/// @brief Creates a mask on the image using the bounding box stored in the file
-/// @param image input image
-/// @param mask output mask
-/// @param str path where the bounding box is stored
-void create_mask(cv::Mat image, cv::Mat& mask, std::string str);
-
 /// @brief Closes the edges of an edge image to form complete lines
 /// @param edges edge image
 /// @param output_edges closed edges
@@ -41,8 +35,14 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 bool sortbysec(const std::pair<int, cv::Vec3b>& a,
 	const std::pair<int, cv::Vec3b>& b);
 
+/// @brief Removes all the connected components whose dimension is less than the biggest one
 void remove_components(cv::Mat& mask);
 
+/// @brief Computes the LBP of the image
+/// @param image input image
+/// @param lbpImage output image
+/// @param radius used for the LBP
+/// @param neighbors used to compute the LBP
 void calculateLBP(cv::Mat image, cv::Mat lbpImage, int radius, int neighbors);
 
 #endif // !PLAYER_DETECTION_H

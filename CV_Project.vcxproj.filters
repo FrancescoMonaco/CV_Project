@@ -18,13 +18,7 @@
     <ClCompile Include="main.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
-    <ClCompile Include="implementations\Eval.cpp">
-      <Filter>File di origine</Filter>
-    </ClCompile>
-    <ClCompile Include="implementations\Utility.cpp">
-      <Filter>File di origine</Filter>
-    </ClCompile>
-    <ClCompile Include="implementations\court_detection.cpp">
+    <ClCompile Include="implementations\eval_bb.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
     <ClCompile Include="implementations\hw_field.cpp">
@@ -33,10 +27,19 @@
     <ClCompile Include="implementations\player_detection.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
-    <ClCompile Include="implementations\segmentation.cpp">
+    <ClCompile Include="implementations\court_detection_part1.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
-    <ClCompile Include="implementations\write_results.cpp">
+    <ClCompile Include="implementations\court_detection_part2.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="implementations\utility_class_rect.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="implementations\utility_write_seg.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="implementations\eval_seg.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
   </ItemGroup>
@@ -59,12 +62,6 @@
       <Filter>File di origine</Filter>
     </ClInclude>
     <ClInclude Include="headers\player_detection.h">
-      <Filter>File di origine</Filter>
-    </ClInclude>
-    <ClInclude Include="headers\segmentation.h">
-      <Filter>File di origine</Filter>
-    </ClInclude>
-    <ClInclude Include="headers\write_results.h">
       <Filter>File di origine</Filter>
     </ClInclude>
   </ItemGroup>
