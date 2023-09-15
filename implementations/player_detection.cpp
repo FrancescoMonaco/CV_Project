@@ -3,6 +3,9 @@
 
 // player_detection.cpp : Michele Russo
 
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/imgproc.hpp"
 void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 
 
@@ -77,17 +80,51 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 			cv::Mat edges;
 			cv::Canny(img_grey, edges, canny_c * median / 4, canny_c * median / 2);
 
+
 			//close the edges found on canny 
 			close_lines(edges);
 
+			cv::RNG rng(12345);
+
+			std::vector < std::vector<cv::Point> > contours;
+
+			findContours(edges, contours, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
+			std::vector<std::vector<cv::Point> >hull(contours.size());
+
+			cv::Mat m = cv::Mat::zeros(edges.size(), CV_8UC1);
+
+			for (size_t i = 0; i < contours.size(); i++)
+			{
+				convexHull(contours[i], hull[i]);
+				cv::Scalar color = cv::Scalar(255);  // Fill with white (255)
+				cv::drawContours(m, hull, static_cast<int>(i), color, cv::FILLED);
+			}
+
+			/*cv::Mat drawing = cv::Mat::zeros(edges.size(), CV_8UC3);
+
+			for (size_t i = 0; i < contours.size(); i++)
+			{
+				cv::Scalar color = cv::Scalar(rng.uniform(0, 256), rng.uniform(0, 256), rng.uniform(0, 256));
+				drawContours(drawing, contours, (int)i, color);
+				drawContours(drawing, hull, (int)i, color);
+			}
+			imshow("Hull demo", drawing);
+			cv::waitKey(0);*/
+
+			/*cv::imshow("linee ", edges);
+			cv::waitKey(0);
+			*/
 			//add some lines at the boundaries of the edges
-			create_lines(edges, edges);
+			//create_lines(edges, edges);
 
 			//i use this function to color inside the figures to get a first temporary segmentation
-			fill_segments(edges);
+			/*fill_segments(edges);
+
+			cv::imshow("segmentation", edges);
+			cv::waitKey(0);*/
 
 			//merging color clustering given at start and temporary segmentation computed just for the box
-			super_impose(cluster, edges, parameters);
+			super_impose(cluster, m, parameters);
 
 			//create the final mask for segmentation
 			h = edges.rows;
@@ -106,6 +143,8 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 				}
 			}
 		}
+
+
 	}
 	else {
 		std::cout << "error path\n";
@@ -115,8 +154,8 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 
 
 void close_lines(cv::Mat& edge_image) {
-
 	//give the size for the application of morphological operator  
+
 	int morph_size = 3;
 
 	cv::Mat element = getStructuringElement(cv::MORPH_CROSS
@@ -124,16 +163,13 @@ void close_lines(cv::Mat& edge_image) {
 
 	//perform gradient morphological 
 	cv::Mat img_out;
-	morphologyEx(edge_image, img_out, cv::MORPH_GRADIENT, element, cv::Point(-1, -1), 3);
-
-	//cv::Mat img_out1;
-	//morphologyEx(img_out, img_out1, cv::MORPH_ERODE, element, cv::Point(-1, -1), 1);
-
+	morphologyEx(edge_image, img_out, cv::MORPH_GRADIENT, element, cv::Point(-1, -1), 1);
 	edge_image = img_out.clone();
 }
 
 
 void fill_segments(cv::Mat& edge_image) {
+
 
 	std::vector<std::vector<cv::Point> > contours;
 	std::vector<cv::Vec4i> hierarchy;
@@ -152,6 +188,7 @@ void fill_segments(cv::Mat& edge_image) {
 		drawContours(edge_image, contours, idx, color, cv::FILLED, 4, hierarchy);
 	}
 }
+
 
 
 void create_lines(cv::Mat edges, cv::Mat& output_edges) {
@@ -365,8 +402,8 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 	}
 
 	output_edges = edges.clone();
-}
 
+}
 void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parameters) {
 
 	//take box parameters location
@@ -389,7 +426,7 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 	double more = 0.0;
 
 	//box expansion when the area of the temporary segmentation is more than 75% than the total are of teh box
-	if (n_nonzeros / tot > 0.55) {
+	if (n_nonzeros / tot > 0.75) {
 		double num = n_nonzeros / tot;
 		num = num * 20;
 		if (n_nonzeros / tot > 90) {
@@ -403,7 +440,6 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 			cv::Mat paddedImage(mask.rows, mask.cols + static_cast<int>(num), mask.type(), cv::Vec3b(0, 0, 0));
 			mask.copyTo(paddedImage(cv::Rect(0, 0, mask.cols, mask.rows)));
 			mask = paddedImage.clone();
-			//more = -0.1;
 			n_zeros = n_zeros + (static_cast<int>(num) * mask.rows);
 		}
 
@@ -447,6 +483,7 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 	cv::Mat final_segmentation;
 	std::vector<cv::Vec3b> colors;
 	std::vector<std::pair<int, cv::Vec3b>> combinedVector;
+
 
 	//find all the color outside the shape of the mask
 	for (int i = 0; i < mask.rows; i++) {
@@ -518,7 +555,6 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 	//remove the non connected components
 	remove_components(final_seg);
 
-
 	cv::Rect roi(box_parameters[0] - x, 0, box_parameters[2] - 1, mask.rows);
 	cv::Mat originalImage = final_seg(roi);
 
@@ -571,5 +607,3 @@ void remove_components(cv::Mat& mask) {
 		}
 	}
 }
-
-
