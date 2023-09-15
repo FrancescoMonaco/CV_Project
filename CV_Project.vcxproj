@@ -136,6 +136,7 @@
     <ClCompile Include="implementations\court_detection_part1.cpp" />
     <ClCompile Include="implementations\court_detection_part2.cpp" />
     <ClCompile Include="implementations\eval_seg.cpp" />
+    <ClCompile Include="implementations\player_clustering.cpp" />
     <ClCompile Include="implementations\utility_class_rect.cpp" />
     <ClCompile Include="implementations\utility_write_seg.cpp" />
     <ClCompile Include="main.cpp" />

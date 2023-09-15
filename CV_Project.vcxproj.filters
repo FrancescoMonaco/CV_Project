@@ -42,6 +42,9 @@
     <ClCompile Include="implementations\eval_seg.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
+    <ClCompile Include="implementations\player_clustering.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt">

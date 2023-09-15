@@ -146,7 +146,7 @@ void showResults(const std::string& source, const std::string& path)
 
     //for each image show the corresponding bounding box
     for (size_t k = 0; k < fn_source.size(); ++k) {
-        cv::Mat im = sourceImages[k];
+        cv::Mat im = sourceImages[k].clone();
         //read the corresponding txt, remove _bin.png and add _bb.txt
         std::string txtPath = fn[k].substr(0, fn[k].size() - 8) + "_bb.txt";
 
@@ -188,7 +188,7 @@ void showResults(const std::string& source, const std::string& path)
         }
 
         //show the image with the bounding boxes
-        cv::namedWindow("Bounding box image", cv::WINDOW_GUI_NORMAL);
+        cv::namedWindow("Bounding box image");
         cv::imshow("Bounding box image", im);
         cv::waitKey(0);
     }
@@ -207,7 +207,7 @@ void showResults(const std::string& source, const std::string& path)
 
         double alpha = 0.1;
         cv::Mat blended;
-        cv::Mat original_image = sourceImages[k];
+        cv::Mat original_image = sourceImages[k].clone();
         cv::addWeighted(original_image, alpha, im_color, 1 - alpha, 0, blended);
         cv::namedWindow("Segmentation Overlay", cv::WINDOW_GUI_NORMAL);
         cv::imshow("Segmentation Overlay", blended);

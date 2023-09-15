@@ -26,6 +26,10 @@ void clustering(cv::Mat image_box, cv::Mat& clustered);
 /// @param output_edges closed edges
 void create_lines(cv::Mat edges, cv::Mat& output_edges);
 
+/// @brief temporarily expand the box for a better clustering and remove the small connected components
+/// @param clustering input image
+/// @param mask output image
+/// @param box_parameters parameters of the box
 void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parameters);
 
 /// @brief Compares two pairs of int and Vec3b
