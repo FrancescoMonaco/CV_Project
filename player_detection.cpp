@@ -6,12 +6,12 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 
 	std::ifstream file(str);
 	cv::Mat mask = image.clone();
-	
 
-	cv::fastNlMeansDenoisingColored(image, image, 4.0, 10);
+
+	cv::fastNlMeansDenoisingColored(image, image, 3.0, 10);
 
 	cv::Mat cluster;
-	
+
 	//clusterize the image
 	clustering(image, cluster);
 
@@ -36,7 +36,7 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 			parameters.push_back(y);
 			parameters.push_back(w);
 			parameters.push_back(h);
-			
+
 			//isolate the box 
 			cv::Mat mask_temp = mask.clone();
 			for (int j = y; j < y + h; j++) {
@@ -47,14 +47,14 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 
 				}
 			}
-			
+
 			//blur the image
 			cv::Mat blur;
 			cv::GaussianBlur(img_out, blur, cv::Size(5, 5), 0.8, 0.8);
 
 			cv::Mat img_grey;
 			cvtColor(blur, img_grey, cv::COLOR_BGR2GRAY);
-			
+
 			//start of computation gradient to create canny threshold 
 			cv::Mat grad_x, grad_y;
 			cv::Mat abs_grad_x, abs_grad_y, test_grad;
@@ -75,23 +75,23 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 			cv::Mat edges;
 			cv::Canny(img_grey, edges, canny_c * median / 4, canny_c * median / 2);
 
-			cv::imshow("canny ", edges);
-			cv::waitKey(0);
+			/*cv::imshow("canny ", edges);
+			cv::waitKey(0);*/
 
 			//close the edges found on canny 
 			close_lines(edges);
 
-			cv::imshow("linee ", edges);
-			cv::waitKey(0);
-			
+			/*cv::imshow("linee ", edges);
+			cv::waitKey(0);*/
+
 			//add some lines at the boundaries of the edges
 			create_lines(edges, edges);
 
 			//i use this function to color inside the figures to get a first temporary segmentation
 			fill_segments(edges);
 
-			cv::imshow("segmentation", edges);
-			cv::waitKey(0);
+			/*cv::imshow("segmentation", edges);
+			cv::waitKey(0);*/
 
 			//merging color clustering given at start and temporary segmentation computed just for the box
 			super_impose(cluster, edges, parameters);
@@ -113,8 +113,8 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 				}
 			}
 
-			
-			
+
+
 			cv::destroyAllWindows();
 		}
 
@@ -137,15 +137,13 @@ void close_lines(cv::Mat& edge_image) {
 
 	int morph_size = 3;
 
-	cv::Mat element = getStructuringElement(cv::MORPH_CROSS
+	cv::Mat element = getStructuringElement(cv::MORPH_ELLIPSE
 		, cv::Size(morph_size, morph_size));
-	
+
 	//perform gradient morphological 
 	cv::Mat img_out;
 	morphologyEx(edge_image, img_out, cv::MORPH_GRADIENT, element, cv::Point(-1, -1), 3);
-	
-	//cv::Mat img_out1;
-	//morphologyEx(img_out, img_out1, cv::MORPH_ERODE, element, cv::Point(-1, -1), 1);
+
 	
 	edge_image = img_out.clone();
 }
@@ -157,7 +155,7 @@ void fill_segments(cv::Mat& edge_image) {
 	std::vector<std::vector<cv::Point> > contours;
 	std::vector<cv::Vec4i> hierarchy;
 	cv::Mat dst = cv::Mat::zeros(edge_image.rows, edge_image.cols, CV_8UC3);
-	
+
 	// find contours of the image
 	findContours(edge_image, contours, hierarchy,
 		cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
@@ -168,7 +166,7 @@ void fill_segments(cv::Mat& edge_image) {
 	for (; idx >= 0; idx = hierarchy[idx][0])
 	{
 		cv::Scalar color(255, 255, 255);
-		drawContours(edge_image, contours, idx, color, cv::FILLED,4 , hierarchy);
+		drawContours(edge_image, contours, idx, color, cv::FILLED, 4, hierarchy);
 	}
 
 	//cv::imshow("Components", edge_image);
@@ -178,7 +176,7 @@ void fill_segments(cv::Mat& edge_image) {
 
 
 void create_lines(cv::Mat edges, cv::Mat& output_edges) {
-	
+
 	// Vectors to store the starting and ending points of the lines
 	std::vector<cv::Point> starters_up, starters_down;
 	std::vector<cv::Point> terminators_up, terminators_down;
@@ -404,37 +402,39 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 
 	//number of pixels detected as part of the temporary player 
 	double n_nonzeros = cv::countNonZero(mask);
-	
+
 	//numbeer of pixels inside the image
-	
+
 	double tot = mask.cols * mask.rows;
-	
+
 	//number of black pixels
 	double n_zeros = tot - n_nonzeros;
-	
+
 	//not used actually
 	double more = 0.0;
 
+	//std::cout << "box area" << tot << std::endl;
+	
 	//box expansion when the area of the temporary segmentation is more than 75% than the total are of teh box
-	if (n_nonzeros / tot > 0.55) {
+	if (tot > 1400 && n_nonzeros / tot > 0.55) {
 		double num = n_nonzeros / tot;
 		num = num * 20;
 		if (n_nonzeros / tot > 90) {
 			num = 30;
-			
+
 		}
 		if (x + w + num <= clustering.cols) {
 
 			w += num;
 
-			cv::Mat paddedImage(mask.rows, mask.cols + static_cast<int>(num), mask.type(), cv::Vec3b(0,0,0));
+			cv::Mat paddedImage(mask.rows, mask.cols + static_cast<int>(num), mask.type(), cv::Vec3b(0, 0, 0));
 			mask.copyTo(paddedImage(cv::Rect(0, 0, mask.cols, mask.rows)));
 			mask = paddedImage.clone();
 			//more = -0.1;
-			n_zeros =n_zeros+ (static_cast<int>(num)*mask.rows);
+			n_zeros = n_zeros + (static_cast<int>(num) * mask.rows);
 		}
 
-		if (x  - num >= 0) {
+		if (x - num >= 0) {
 			x = x - num;
 			cv::Mat paddedImage(mask.rows, mask.cols + static_cast<int>(num), mask.type(), cv::Vec3b(0, 0, 0));
 			mask.copyTo(paddedImage(cv::Rect(static_cast<int>(num), 0, mask.cols, mask.rows)));
@@ -450,7 +450,7 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 	cv::Mat box(mask.size(), CV_8UC3);
 	cv::Mat reverse_box(mask.size(), CV_8UC3);
 
-for (int i = y; i < y + h; i++) {
+	for (int i = y; i < y + h; i++) {
 		for (int j = x; j < x + w; j++) {
 
 			//super impose
@@ -470,7 +470,7 @@ for (int i = y; i < y + h; i++) {
 
 	}
 
-	
+
 
 	cv::Mat final_segmentation;
 	std::vector<cv::Vec3b> colors;
@@ -498,7 +498,7 @@ for (int i = y; i < y + h; i++) {
 
 					cv::Mat temp;
 					cv::inRange(reverse_box, color, color, temp);
-					
+
 					int pixel = cv::countNonZero(temp);
 
 					combinedVector.push_back(std::pair(pixel, color));
@@ -514,17 +514,17 @@ for (int i = y; i < y + h; i++) {
 	double num_labels = colors.size();
 	std::sort(combinedVector.begin(), combinedVector.end(), sortbysec);
 	//i take only the pixel who are the most out 
-	
+
 	for (int z = 0; z < colors.size(); z++) {
-	 double n_elements = combinedVector[z].first;
-		
-		double fr = n_elements ;
-		
+		double n_elements = combinedVector[z].first;
+
+		double fr = n_elements;
+
 		double tr = n_zeros / num_labels;
-		
+
 		//skip
 		if (fr <= tr) {
-				continue;
+			continue;
 		}
 		else {
 			cv::Vec3b color = combinedVector[z].second;
@@ -539,20 +539,20 @@ for (int i = y; i < y + h; i++) {
 
 				}
 			}
-			cv::imshow(" ", box_superimpose);
-			cv::waitKey(0);
+			//cv::imshow(" ", box_superimpose);
+			//cv::waitKey(0);
 		}
 
 	}
-	
+
 	/*cv::imshow("final", box_superimpose);
 	cv::waitKey(0);
 	*/
 	cv::Mat final_seg, inversion;
 	cv::inRange(box_superimpose, cv::Vec3b(0, 0, 0), cv::Vec3b(0, 0, 0), inversion);
-	
+
 	cv::bitwise_not(inversion, final_seg);
-	
+
 
 	//remove the non connected components
 	remove_components(final_seg);
@@ -563,10 +563,10 @@ for (int i = y; i < y + h; i++) {
 	std::cout << x <<std::endl;*/
 
 
-	cv::Rect roi(box_parameters[0] - x, 0, box_parameters[2]-1, mask.rows);
+	cv::Rect roi(box_parameters[0] - x, 0, box_parameters[2] - 1, mask.rows);
 	cv::Mat originalImage = final_seg(roi);
-	cv::imshow("final seg", originalImage);
-	cv::waitKey(0);
+	/*cv::imshow("final seg", originalImage);
+	cv::waitKey(0);*/
 
 	mask = originalImage.clone();
 }
@@ -579,7 +579,7 @@ void remove_components(cv::Mat& mask) {
 
 	// Create a vector to store the pixel counts for each region
 	std::vector<int> regionPixelCounts(numLabels, 0);
-	
+
 	//count number of variables 
 	double tot = 0;
 
@@ -587,7 +587,7 @@ void remove_components(cv::Mat& mask) {
 	for (int y = 0; y < labeledImage.rows; y++) {
 		for (int x = 0; x < labeledImage.cols; x++) {
 			int label = labeledImage.at<int>(y, x);
-			
+
 			if (label > 0) {
 				tot++;
 				regionPixelCounts[label]++;
@@ -595,17 +595,17 @@ void remove_components(cv::Mat& mask) {
 
 		}
 	}
-	
-	
-	double medium = tot/regionPixelCounts.size();
-	
+
+
+	double medium = tot / regionPixelCounts.size();
+
 	//remove all the non connected componets
 	for (int i = 0; i < mask.rows; i++) {
 		for (int j = 0; j < mask.cols; j++) {
 			int label = labeledImage.at<int>(i, j);
 			//remove condition
 
-			if (regionPixelCounts[label]<medium-1) {
+			if (regionPixelCounts[label] < medium - 1) {
 				//std::cout<< regionPixelCounts[label] <<std::endl;
 				mask.at<uchar>(i, j) = 0;
 
@@ -617,8 +617,8 @@ void remove_components(cv::Mat& mask) {
 		}
 	}
 
-	cv::imshow("final mask", mask);
-	cv::waitKey(0);
+	//cv::imshow("final mask", mask);
+	//cv::waitKey(0);
 }
 
 

@@ -1,38 +1,35 @@
 #include "player_detection.h"
 
-
+// player_clustering.cpp : Michele Russo
 
 void clustering(cv::Mat image, cv::Mat& cluster) {
 
 
-	int numClusters = 11; // Number of desired colors after quantization
+	int numClusters = 13; // Number of desired colors after quantization
 	cv::Mat labels, centers;
-	cv::TermCriteria criteria = cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::MAX_ITER, 200, 0.001);
+	cv::TermCriteria criteria = cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::MAX_ITER, 100, 0.001);
 
 	//convert the image into HSV color space since it is more informative than RGB image
 	cv::Mat image_box;
 	cv::cvtColor(image, image_box, cv::COLOR_BGR2HSV);
 
+	// Data for the processing
 	cv::Mat floatImage, clustered;
 
 	std::vector<cv::Vec3b> vec;
 	cv::Mat mask(image_box.rows, image_box.cols, CV_8UC1);
-	//std::vector<cv::Point> pixel_positions;
 
 
 	cv::Mat lbpImage(image.size(), CV_8U, cv::Scalar(0));
 
 	//calculate local binary pattern to add more information about neighboorhood of the single pixel
-	calculateLBP(image_box, lbpImage, 3, 5);
+	calculateLBP(image_box, lbpImage, 5, 7);
 
 	for (int i = 0; i < image_box.rows; i++) {
 		for (int j = 0; j < image_box.cols; j++) {
 
 			vec.push_back(image_box.at<cv::Vec3b>(i, j));
 			mask.at<uchar>(i, j) = 1;
-			//pixel_positions.push_back(cv::Point(j, i)); // Store pixel positions
-
-
 		}
 	}
 
@@ -51,8 +48,7 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 	//normalize data
 	cv::normalize(flattened_data, flattened_data, 0, 1, cv::NORM_MINMAX);
 
-	//cv::Mat flat = image_box.reshape(1, image_box.cols * image_box.rows);
-	cv::kmeans(flattened_data, numClusters, labels, criteria, 5, cv::KMEANS_PP_CENTERS, centers);
+	cv::kmeans(flattened_data, numClusters, labels, criteria, 10, cv::KMEANS_PP_CENTERS, centers);
 
 	// Define replacement colors
 	cv::Vec3b colors[15];
@@ -99,11 +95,6 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 	}
 
 	cluster = clustered.clone();
-
-
-	cv::imshow("clustering", cluster);
-	cv::waitKey(0);
-
 }
 
 
@@ -132,10 +123,10 @@ void calculateLBP(cv::Mat image, cv::Mat lbpImage, int radius, int neighbors) {
 
 				int x = j + static_cast<int>(radius * cos(2.0 * CV_PI * k / neighbors));
 				int y = i - static_cast<int>(radius * sin(2.0 * CV_PI * k / neighbors));
-				
+
 				//for all the pixels that have a value greater than the central pixel, we 
 				//perform the bitwise or and a shift operation  
-				
+
 				if (grayImage.at<uchar>(y, x) >= center) {
 					code |= (1 << k);
 				}
@@ -147,4 +138,3 @@ void calculateLBP(cv::Mat image, cv::Mat lbpImage, int radius, int neighbors) {
 
 
 }
-
