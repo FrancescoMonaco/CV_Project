@@ -44,7 +44,7 @@ int main(int argc, char** argv)
         // Reorganize the vector into a vector of vectors of Rects
     std::vector<std::vector<cv::Rect>> processedData2 = reshapeBB(processedData);
 
- 
+
         // For each test image
     for (size_t k = 0; k < images.size(); k++) {
 
@@ -105,7 +105,7 @@ int main(int argc, char** argv)
           
           writeSEG(segmentation_bin, seg_bin_file);
           writeSEG(segmentation, seg_color_file);
-    }
+    } 
    
    
     // EVALUATION PIPELINE

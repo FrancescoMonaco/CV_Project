@@ -5,9 +5,9 @@
 void clustering(cv::Mat image, cv::Mat& cluster) {
 
 
-	int numClusters = 13; // Number of desired colors after quantization
+	int numClusters = 11; // Number of desired colors after quantization
 	cv::Mat labels, centers;
-	cv::TermCriteria criteria = cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::MAX_ITER, 10, 0.01);
+	cv::TermCriteria criteria = cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::MAX_ITER, 200, 0.001);
 
 	//convert the image into HSV color space since it is more informative than RGB image
 	cv::Mat image_box;
@@ -48,7 +48,7 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 	//normalize data
 	cv::normalize(flattened_data, flattened_data, 0, 1, cv::NORM_MINMAX);
 
-	cv::kmeans(flattened_data, numClusters, labels, criteria, 2, cv::KMEANS_PP_CENTERS, centers);
+	cv::kmeans(flattened_data, numClusters, labels, criteria, 5, cv::KMEANS_PP_CENTERS, centers);
 
 	// Define replacement colors
 	cv::Vec3b colors[15];
@@ -135,6 +135,4 @@ void calculateLBP(cv::Mat image, cv::Mat lbpImage, int radius, int neighbors) {
 			lbpImage.at<uchar>(i, j) = code;
 		}
 	}
-
-
 }

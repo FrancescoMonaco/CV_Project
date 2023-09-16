@@ -3,9 +3,6 @@
 
 // player_detection.cpp : Michele Russo
 
-#include "opencv2/imgcodecs.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/imgproc.hpp"
 void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 
 
@@ -80,51 +77,17 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 			cv::Mat edges;
 			cv::Canny(img_grey, edges, canny_c * median / 4, canny_c * median / 2);
 
-
 			//close the edges found on canny 
 			close_lines(edges);
 
-			cv::RNG rng(12345);
-
-			std::vector < std::vector<cv::Point> > contours;
-
-			findContours(edges, contours, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
-			std::vector<std::vector<cv::Point> >hull(contours.size());
-
-			cv::Mat m = cv::Mat::zeros(edges.size(), CV_8UC1);
-
-			for (size_t i = 0; i < contours.size(); i++)
-			{
-				convexHull(contours[i], hull[i]);
-				cv::Scalar color = cv::Scalar(255);  // Fill with white (255)
-				cv::drawContours(m, hull, static_cast<int>(i), color, cv::FILLED);
-			}
-
-			/*cv::Mat drawing = cv::Mat::zeros(edges.size(), CV_8UC3);
-
-			for (size_t i = 0; i < contours.size(); i++)
-			{
-				cv::Scalar color = cv::Scalar(rng.uniform(0, 256), rng.uniform(0, 256), rng.uniform(0, 256));
-				drawContours(drawing, contours, (int)i, color);
-				drawContours(drawing, hull, (int)i, color);
-			}
-			imshow("Hull demo", drawing);
-			cv::waitKey(0);*/
-
-			/*cv::imshow("linee ", edges);
-			cv::waitKey(0);
-			*/
 			//add some lines at the boundaries of the edges
-			//create_lines(edges, edges);
+			create_lines(edges, edges);
 
 			//i use this function to color inside the figures to get a first temporary segmentation
-			/*fill_segments(edges);
-
-			cv::imshow("segmentation", edges);
-			cv::waitKey(0);*/
+			fill_segments(edges);
 
 			//merging color clustering given at start and temporary segmentation computed just for the box
-			super_impose(cluster, m, parameters);
+			super_impose(cluster, edges, parameters);
 
 			//create the final mask for segmentation
 			h = edges.rows;
@@ -143,8 +106,6 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 				}
 			}
 		}
-
-
 	}
 	else {
 		std::cout << "error path\n";
@@ -154,6 +115,7 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 
 
 void close_lines(cv::Mat& edge_image) {
+
 	//give the size for the application of morphological operator  
 
 	int morph_size = 3;
@@ -163,7 +125,11 @@ void close_lines(cv::Mat& edge_image) {
 
 	//perform gradient morphological 
 	cv::Mat img_out;
-	morphologyEx(edge_image, img_out, cv::MORPH_GRADIENT, element, cv::Point(-1, -1), 1);
+	morphologyEx(edge_image, img_out, cv::MORPH_GRADIENT, element, cv::Point(-1, -1), 3);
+
+	//cv::Mat img_out1;
+	//morphologyEx(img_out, img_out1, cv::MORPH_ERODE, element, cv::Point(-1, -1), 1);
+
 	edge_image = img_out.clone();
 }
 
@@ -402,8 +368,8 @@ void create_lines(cv::Mat edges, cv::Mat& output_edges) {
 	}
 
 	output_edges = edges.clone();
-
 }
+
 void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parameters) {
 
 	//take box parameters location
@@ -426,7 +392,7 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 	double more = 0.0;
 
 	//box expansion when the area of the temporary segmentation is more than 75% than the total are of teh box
-	if (n_nonzeros / tot > 0.75) {
+	if (n_nonzeros / tot > 0.55) {
 		double num = n_nonzeros / tot;
 		num = num * 20;
 		if (n_nonzeros / tot > 90) {
@@ -479,11 +445,10 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 	}
 
 
-
 	cv::Mat final_segmentation;
 	std::vector<cv::Vec3b> colors;
+	//std::vector<int> pixels;
 	std::vector<std::pair<int, cv::Vec3b>> combinedVector;
-
 
 	//find all the color outside the shape of the mask
 	for (int i = 0; i < mask.rows; i++) {
@@ -543,14 +508,12 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 				}
 			}
 		}
-
 	}
 
 	cv::Mat final_seg, inversion;
 	cv::inRange(box_superimpose, cv::Vec3b(0, 0, 0), cv::Vec3b(0, 0, 0), inversion);
 
 	cv::bitwise_not(inversion, final_seg);
-
 
 	//remove the non connected components
 	remove_components(final_seg);
@@ -586,7 +549,6 @@ void remove_components(cv::Mat& mask) {
 		}
 	}
 
-
 	double medium = tot / regionPixelCounts.size();
 
 	//remove all the non connected componets
@@ -596,9 +558,7 @@ void remove_components(cv::Mat& mask) {
 			//remove condition
 
 			if (regionPixelCounts[label] < medium - 1) {
-				//std::cout<< regionPixelCounts[label] <<std::endl;
 				mask.at<uchar>(i, j) = 0;
-
 			}
 			else {
 				continue;
@@ -607,3 +567,4 @@ void remove_components(cv::Mat& mask) {
 		}
 	}
 }
+
