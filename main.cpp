@@ -77,7 +77,20 @@ int main(int argc, char** argv)
          // Start player segmentation
          std::cout << "Segmenting the players" << std::endl;
          cv::Mat seg_image(image_box.size(), CV_8UC1);
-         player_segmentation(image_box, seg_image, boxes);
+
+         // ***Choose segmentation approach***
+         /*
+         * if approach = true perform standard segmentation
+         * else perform the more robust approach
+         */
+         bool approach = true;
+
+         if (approach) {
+             player_segmentation(image_box, seg_image, boxes);
+         }
+         else {
+             player_segmentation_robust(image_box, seg_image, boxes);
+         }
 
          // Variables for the field segmentation
          cv::Mat mask, clustered, centroid;

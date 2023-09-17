@@ -12,7 +12,7 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 
 # Add libraries
 add_library(utility headers/utility.h implementations/utility_class_rect.cpp implementations/utility_write_seg.cpp)
-add_library(player_detection headers/player_detection.h implementations/player_detection.cpp implementations/player_clustering.cpp)
+add_library(player_detection headers/player_detection.h implementations/player_detection.cpp implementations/player_clustering.cpp implementations/player_segmentation_robustness.cpp)
 add_library(court_detection headers/court_detection.h implementations/court_detection_part1.cpp implementations/court_detection_part2.cpp)
 add_library(evaluation headers/Eval.h implementations/eval_bb.cpp implementations/eval_seg.cpp)
 add_library(base INTERFACE)

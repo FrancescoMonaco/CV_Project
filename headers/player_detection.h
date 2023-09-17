@@ -2,6 +2,8 @@
 #define PLAYER_DETECTION_H
 #include"header.h"
 
+//***Classic segmentations definitions***//
+
 /// @brief Segment the players from the image
 /// @param image original image
 /// @param seg_image image that stores the segmented players
@@ -48,5 +50,17 @@ void remove_components(cv::Mat& mask);
 /// @param radius used for the LBP
 /// @param neighbors used to compute the LBP
 void calculateLBP(cv::Mat image, cv::Mat lbpImage, int radius, int neighbors);
+
+//***Robustness segmentations definitions***//
+
+/// @brief Segment the players from the image using the convex hull
+/// @param image original image
+/// @param seg_image segmented image with the players
+/// @param str stings where the bounding box is stored
+void player_segmentation_robust(cv::Mat image, cv::Mat& seg_image, std::string str);
+
+/// @brief Line closure using Convex Hull
+/// @param edge_image Canny edge image
+void close_lines_robustness(cv::Mat& edge_image);
 
 #endif // !PLAYER_DETECTION_H
