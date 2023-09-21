@@ -2,10 +2,10 @@
 
 // player_clustering.cpp : Michele Russo
 
-void clustering(cv::Mat image, cv::Mat& cluster) {
+void clustering(cv::Mat image, cv::Mat& cluster, int num_clusters) {
 
 
-	int numClusters = 13; // Number of desired colors after quantization
+	//int numClusters = 13; // Number of desired colors after quantization
 	cv::Mat labels, centers;
 	cv::TermCriteria criteria = cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::MAX_ITER, 100, 0.001);
 
@@ -48,7 +48,7 @@ void clustering(cv::Mat image, cv::Mat& cluster) {
 	//normalize data
 	cv::normalize(flattened_data, flattened_data, 0, 1, cv::NORM_MINMAX);
 
-	cv::kmeans(flattened_data, numClusters, labels, criteria, 10, cv::KMEANS_PP_CENTERS, centers);
+	cv::kmeans(flattened_data, num_clusters, labels, criteria, 10, cv::KMEANS_PP_CENTERS, centers);
 
 	// Define replacement colors
 	cv::Vec3b colors[15];

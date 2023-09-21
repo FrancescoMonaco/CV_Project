@@ -15,7 +15,7 @@ void player_segmentation_robust(cv::Mat image, cv::Mat& seg_image, std::string s
 	cv::Mat cluster;
 
 	//clusterize the image
-	clustering(image, cluster);
+	clustering(image, cluster,11);
 
 	if (file.is_open()) {
 
@@ -77,8 +77,8 @@ void player_segmentation_robust(cv::Mat image, cv::Mat& seg_image, std::string s
 			cv::Mat edges;
 			cv::Canny(img_grey, edges, canny_c * median / 4, canny_c * median / 2);
 
-			cv::imshow("canny ", edges);
-			cv::waitKey(0);
+			/*cv::imshow("canny ", edges);
+			cv::waitKey(0);*/
 
 			//close the edges found on canny 
 			close_lines(edges);
@@ -100,9 +100,9 @@ void player_segmentation_robust(cv::Mat image, cv::Mat& seg_image, std::string s
 			}
 
 			// Display 
-			cv::imshow("Filled Convex Hull", m);
+			/*cv::imshow("Filled Convex Hull", m);
 			
-			cv::waitKey(0);
+			cv::waitKey(0);*/
 
 			//merging color clustering given at start and temporary segmentation computed just for the box
 			super_impose(cluster, m, parameters);
@@ -161,248 +161,4 @@ void close_lines_robustness(cv::Mat& edge_image) {
 	edge_image = img_out.clone();
 }
 
-//
-//void fill_segments(cv::Mat& edge_image) {
-//
-//
-//	std::vector<std::vector<cv::Point> > contours;
-//	std::vector<cv::Vec4i> hierarchy;
-//	cv::Mat dst = cv::Mat::zeros(edge_image.rows, edge_image.cols, CV_8UC3);
-//
-//	// find contours of the image
-//	findContours(edge_image, contours, hierarchy,
-//		cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
-//
-//	// iterate through all the top-level contours,
-//	// draw each connected component with its own random color
-//	int idx = 0;
-//	for (; idx >= 0; idx = hierarchy[idx][0])
-//	{
-//		cv::Scalar color(255, 255, 255);
-//		drawContours(edge_image, contours, idx, color, cv::FILLED, 4, hierarchy);
-//	}
-//
-//	//cv::imshow("Components", edge_image);
-//	//cv::waitKey(0);
-//}
-
-
-//
-//void create_lines(cv::Mat edges, cv::Mat& output_edges) {
-//
-//	// Vectors to store the starting and ending points of the lines
-//	std::vector<cv::Point> starters_up, starters_down;
-//	std::vector<cv::Point> terminators_up, terminators_down;
-//
-//
-//	bool start_up = false, start_down = false;
-//
-//	starters_up.clear();
-//	terminators_up.clear();
-//	starters_down.clear();
-//	terminators_down.clear();
-//
-//	int n_rows = edges.rows, col = edges.cols;
-//
-//	//--------------------- UP-DOWN CLOSURE ------------------------------
-//	for (int j = 0; j < edges.cols; j++) { //in the same cycle we find the starting and ending point of the lines up and down
-//		// UP check
-//		uchar pixel_up = edges.at<uchar>(0, j);
-//
-//		if (!start_up && pixel_up == 255 && j + 1 != edges.cols && edges.at<uchar>(0, j + 1) != 255) {
-//
-//			starters_up.push_back(cv::Point(j, 0));
-//			start_up = true;
-//		}
-//
-//		else if (start_up && pixel_up == 255) {
-//
-//			start_up = false;
-//			terminators_up.push_back(cv::Point(j, 0));
-//		}
-//		// DOWN check
-//		uchar pixel_down = edges.at<uchar>(n_rows - 1, j);
-//
-//		if (!start_down && pixel_down == 255 && j + 1 != edges.cols && edges.at<uchar>(n_rows - 1, j + 1) != 255) {
-//
-//			starters_down.push_back(cv::Point(j, n_rows - 1));
-//			start_down = true;
-//
-//		}
-//
-//		else if (start_down && pixel_down == 255) {
-//			start_down = false;
-//			terminators_down.push_back(cv::Point(j, n_rows - 1));
-//		}
-//
-//	}
-//	// UP closure
-//	if (start_up) {
-//		starters_up.pop_back();
-//
-//	}
-//
-//	for (int i = 0; i < starters_up.size(); i++) {
-//
-//		//take starting and ending point
-//		cv::Point starte = starters_up[i];
-//		cv::Point end = terminators_up[i];
-//
-//		if (end.x - starte.x > edges.rows / 4) {
-//
-//		}
-//		else {
-//			for (int j = starte.x; j < end.x; j++) {
-//
-//				edges.at<uchar>(0, j) = 255;
-//				edges.at<uchar>(1, j) = 255;
-//				edges.at<uchar>(2, j) = 255;
-//				edges.at<uchar>(3, j) = 255;
-//				edges.at<uchar>(4, j) = 255;
-//
-//			}
-//		}
-//
-//	}
-//
-//	// DOWN closure
-//	if (start_down) {
-//		starters_down.pop_back();
-//
-//	}
-//
-//
-//	for (int i = 0; i < starters_down.size(); i++) {
-//
-//		//take starting and ending point
-//		cv::Point starte = starters_down[i];
-//		cv::Point end = terminators_down[i];
-//
-//		if (end.x - starte.x > edges.rows / 2) {
-//			continue;
-//		}
-//		else {
-//			for (int j = starte.x; j < end.x; j++) {
-//
-//				edges.at<uchar>(n_rows - 1, j) = 255;
-//				edges.at<uchar>(n_rows - 2, j) = 255;
-//				edges.at<uchar>(n_rows - 3, j) = 255;
-//				edges.at<uchar>(n_rows - 4, j) = 255;
-//				edges.at<uchar>(n_rows - 5, j) = 255;
-//
-//			}
-//		}
-//
-//	}
-//	//--------------------- LATERAL CLOSURE ------------------------------
-//
-//	start_up = start_down = false;
-//
-//	starters_up.clear();
-//	terminators_up.clear();
-//	starters_down.clear();
-//	terminators_down.clear();
-//
-//
-//	for (int j = 0; j < edges.rows; j++) { //we use the same cycle for left and right
-//		// LEFT check
-//		uchar pixel_up = edges.at<uchar>(j, 0);
-//
-//		if (!start_up && pixel_up == 255 && j + 1 != edges.rows && edges.at<uchar>(j + 1, 0) != 255) {
-//
-//			starters_up.push_back(cv::Point(0, j));
-//			start_up = true;
-//
-//		}
-//
-//		else if (start_up && pixel_up == 255) {
-//
-//			start_up = false;
-//			terminators_up.push_back(cv::Point(0, j));
-//			//std::cout << "found\n";
-//		}
-//
-//		// RIGHT check
-//		uchar pixel_down = edges.at<uchar>(j, col - 1);
-//
-//		if (!start_down && pixel_down == 255 && j + 1 != edges.rows && edges.at<uchar>(j + 1, col - 1) != 255) {
-//
-//			starters_down.push_back(cv::Point(col - 1, j));
-//			start_down = true;
-//
-//		}
-//
-//		else if (start_down && pixel_down == 255) {
-//
-//			start_down = false;
-//			terminators_down.push_back(cv::Point(col - 1, j));
-//			//std::cout << "found\n";
-//		}
-//
-//	}
-//
-//	// LEFT closure
-//	if (start_up) {
-//		starters_up.pop_back();
-//
-//	}
-//
-//	for (int i = 0; i < starters_up.size(); i++) {
-//
-//
-//		cv::Point starte = starters_up[i];
-//		cv::Point end = terminators_up[i];
-//
-//		if ((end.y - starte.y) > edges.rows / 2) {
-//
-//		}
-//		else {
-//			for (int j = starte.y; j < end.y; j++) {
-//
-//				edges.at<uchar>(j, 0) = 255;
-//				edges.at<uchar>(j, 1) = 255;
-//				edges.at<uchar>(j, 2) = 255;
-//				edges.at<uchar>(j, 3) = 255;
-//				edges.at<uchar>(j, 4) = 255;
-//
-//			}
-//		}
-//
-//	}
-//
-//	// RIGHT closure
-//	if (start_down) {
-//		starters_down.pop_back();
-//
-//	}
-//
-//
-//	for (int i = 0; i < starters_down.size(); i++) {
-//
-//
-//		cv::Point starte = starters_down[i];
-//		cv::Point end = terminators_down[i];
-//
-//		if (end.y - starte.y > edges.cols / 3) {
-//
-//		}
-//		else {
-//			for (int j = starte.y; j < end.y; j++) {
-//
-//				edges.at<uchar>(j, col - 1) = 255;
-//				edges.at<uchar>(j, col - 2) = 255;
-//				edges.at<uchar>(j, col - 3) = 255;
-//				edges.at<uchar>(j, col - 4) = 255;
-//				edges.at<uchar>(j, col - 5) = 255;
-//
-//			}
-//		}
-//
-//	}
-//
-//	output_edges = edges.clone();
-//	/*cv::imshow("new edges", edges);
-//	cv::waitKey(0);*/
-//
-//}
 

@@ -13,7 +13,7 @@ void player_segmentation(cv::Mat image, cv::Mat& seg_image, std::string str) {
 	cv::Mat cluster;
 
 	//clusterize the image
-	clustering(image, cluster);
+	clustering(image, cluster, 13);
 
 	if (file.is_open()) {
 
@@ -541,6 +541,7 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 				}
 			}
 			//cv::imshow(" ", box_superimpose);
+			//
 			//cv::waitKey(0);
 		}
 

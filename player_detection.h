@@ -19,7 +19,7 @@ void fill_segments(cv::Mat& edge_image);
 /// @brief Clusters the image using the k-means algorithm
 /// @param image_box input image
 /// @param clustered output array
-void clustering(cv::Mat image_box, cv::Mat& clustered);
+void clustering(cv::Mat image_box, cv::Mat& clustered, int num_clusters);
 
 /// @brief Closes the edges of an edge image to form complete lines
 /// @param edges edge image
