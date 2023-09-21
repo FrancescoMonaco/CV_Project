@@ -413,14 +413,15 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 	//not used actually
 	double more = 0.0;
 
-	//std::cout << "box area" << tot << std::endl;
+	
+	std::cout << "box area" << tot << std::endl;
 	
 	//box expansion when the area of the temporary segmentation is more than 75% than the total are of teh box
-	if (tot > 1400 && n_nonzeros / tot > 0.55) {
+	if (tot > 13500 && n_nonzeros / tot > 0.55) {
 		double num = n_nonzeros / tot;
 		num = num * 20;
-		if (n_nonzeros / tot > 90) {
-			num = 30;
+		if (n_nonzeros / tot >0.9 ) {
+			num = 40;
 
 		}
 		if (x + w + num <= clustering.cols) {
@@ -545,9 +546,9 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 
 	}
 
-	/*cv::imshow("final", box_superimpose);
+	cv::imshow("final", box_superimpose);
 	cv::waitKey(0);
-	*/
+	
 	cv::Mat final_seg, inversion;
 	cv::inRange(box_superimpose, cv::Vec3b(0, 0, 0), cv::Vec3b(0, 0, 0), inversion);
 
@@ -565,8 +566,8 @@ void super_impose(cv::Mat clustering, cv::Mat& mask, std::vector<int> box_parame
 
 	cv::Rect roi(box_parameters[0] - x, 0, box_parameters[2] - 1, mask.rows);
 	cv::Mat originalImage = final_seg(roi);
-	/*cv::imshow("final seg", originalImage);
-	cv::waitKey(0);*/
+	cv::imshow("final seg", originalImage);
+	cv::waitKey(0);
 
 	mask = originalImage.clone();
 }

@@ -148,7 +148,7 @@ void close_lines_robustness(cv::Mat& edge_image) {
 
 	int morph_size = 3;
 
-	cv::Mat element = getStructuringElement(cv::MORPH_CROSS
+	cv::Mat element = getStructuringElement(cv::MORPH_ELLIPSE
 		, cv::Size(morph_size, morph_size));
 
 	//perform gradient morphological 
